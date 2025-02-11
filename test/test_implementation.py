@@ -74,7 +74,7 @@ def generate_script_voice_overs(
         wav, sampling_rate = torchaudio.load(voice_filepath)
         # speaker_embedding = model.embed_spk_audio(wav, sampling_rate)   
         speaker_embedding = model.make_speaker_embedding(wav, sampling_rate)    
-        speaker_embedding = speaker_embedding.to(device, dtype=torch.bfloat16)   
+        speaker_embedding = speaker_embedding.to(device)   
 
         # add prefix audio to the generation for smoother transitions
         audio_prefix_codes = None
