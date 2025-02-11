@@ -21,7 +21,7 @@ class DefaultUnconditionParams:
 
 @dataclass
 class DefaultGenerationParams:
-    cfg_scale: float = 1.0
+    cfg_scale: float = 2.0
     min_p: float = 0.2
     fmax: int = 22050
     seed: int = 421
@@ -44,4 +44,5 @@ class DefaultConfig:
     generation_params: DefaultGenerationParams = field(default_factory=DefaultGenerationParams)
     emotion_params: DefaultEmotionParams = field(default_factory=DefaultEmotionParams)
     language_code: str = "en-us"
-    model_type: str = "Zyphra/Zonos-v0.1-hybrid"
+    model_type: str = "Zyphra/Zonos-v0.1-transformer" #"Zyphra/Zonos-v0.1-hybrid"
+    speaker_noised_bool: bool = False

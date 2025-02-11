@@ -33,7 +33,8 @@ def load_config():
             generation_params=DefaultGenerationParams(**data.get("generation_params", {})),
             emotion_params=DefaultEmotionParams(**data.get("emotion_params", {})),
             language_code=data.get("language_code", "en-us"),
-            model_type=data.get("model_type", "Zyphra/Zonos-v0.1-hybrid")
+            model_type=data.get("model_type", "Zyphra/Zonos-v0.1-hybrid"),
+            speaker_noised_bool=data.get("speaker_noised_bool", False)
         )
 
     logging.info(f"Config file not found at {config_path}. Creating a new one.")
