@@ -4,3 +4,4 @@ __pycache__
 # project ignores
 Zonos
 outputs
+configs/default.json
