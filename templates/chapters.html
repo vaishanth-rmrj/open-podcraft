@@ -1,0 +1,30 @@
+<div class="mb-3">
+    <button type="button" class="btn btn-success" id="generatePodcastScriptBtn">Generate Script</button>
+</div>
+
+<form action="/api/generate_podcast_script" method="POST" id="podcastChaptersForm">
+
+    <!-- podcast title -->   
+    <div class="mb-3">
+        <input type="text" class="form-control" name="title" placeholder="Untitled Podcast">
+    </div>
+
+    <!-- podcast description -->
+    <!-- <div class="w-200 min-w-[200px] mt-8">
+        <textarea
+            placeholder="Description for the podcast"
+            class="peer h-full min-h-[50px] w-full resize-none border-blue-gray-200 bg-transparent pt-4 pb-1.5 font-sans text-md font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border-blue-gray-200 focus:border-gray-900 focus:outline-0 disabled:resize-none disabled:border-0 disabled:bg-blue-gray-50">
+        </textarea>
+    </div> -->
+    
+    <!-- chapters -->
+    <div class="mb-3">
+        <textarea 
+            class="form-control" 
+            name="content" 
+            placeholder="Type in the chapters you want to discuss in the podcast" 
+            rows="3"
+            style="height: 600px;"
+        ></textarea>
+    </div>
+</form>            
