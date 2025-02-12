@@ -6,18 +6,21 @@ from datetime import datetime
 from typing import List, Dict
 import logging
 import time
+from dotenv import load_dotenv
 
 # fix package path for imports to work
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-
+from openai import OpenAI
 from zonos.model import Zonos
 from zonos.conditioning import make_cond_dict
 
 # project imports
-from utils import process_script, check_available_voices, ScriptLine, init_logging
+from utils import process_script_from_txt, check_available_voices, ScriptLine, init_logging, load_prompts, process_podcast_script_from_llm
 from configs.utils import load_config
 from configs.default import DefaultConfig
+
+load_dotenv()  # loads variables from .env
 
 class OpenPodCraft:
     def __init__(self):
@@ -54,8 +57,65 @@ class OpenPodCraft:
     def generate_chapters(self, files:List, context:str, prompt:str) -> str:
         raise NotImplementedError("Generating chapters from files not yet implemented !!")
     
-    def generate_podcast_script(self, chapters:str, prompt:str):
-        raise NotImplementedError("Generating podcast script from chapters not yet implemented !!")
+    def generate_podcast_script(self, chapters:str, prompt:str, model_type:str = "deepseek/deepseek-r1:free"):
+
+        logging.info(f"Generating podcast script from API using model :{model_type}")
+
+        self.podcast_speaker_queue = []
+        api_key = os.environ.get("OPENROUTER_API_KEY")
+        if not api_key:
+            raise EnvironmentError("The OPENROUTER_API_KEY environment variable is not set.")
+
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+        )
+
+        # create msg
+        msgs = [
+            {
+                "role": "user",
+                "content": f"Chapters: \n {chapters} \n end of chapters"
+            },
+            {
+                "role": "user",
+                "content": f"rules: \n {prompt['rules']} \n end of rules"
+            },
+            {
+                "role": "user",
+                "content": f"Prompt: \n {prompt['context']} \n end of prompt"
+            }
+        ]
+
+        logging.info("Waiting for LLM response. Please wait it might take several minutes !!")
+        completion = client.chat.completions.create(
+            extra_headers={
+                # "HTTP-Referer": "<YOUR_SITE_URL>", # Optional. Site URL for rankings on openrouter.ai.
+                "X-Title": "Open-PodCraft", # Optional. Site title for rankings on openrouter.ai.
+            },
+            extra_body={},
+            model=model_type,
+            messages=msgs,
+        )
+        logging.info("LLM response received")
+
+        llm_response = completion.choices[0].message.content
+        if llm_response is None:
+            logging.info(f"Did not receive a response from LLM. Try again !!")
+            return False
+
+        os.makedirs("outputs", exist_ok=True)
+        with open("outputs/llm_script.txt", "w") as file:
+            file.write(llm_response)
+
+        # generate podcast script speaker queue  from raw llm response
+        process_podcast_script_from_llm(
+            llm_response,
+            queue = self.podcast_speaker_queue,
+        )
+
+        print(self.podcast_speaker_queue)
+        return True
 
     def fetch_speaker_info(self, speaker_queue:List[ScriptLine]):
         """
@@ -238,7 +298,6 @@ class OpenPodCraft:
                     device=self.device
             )
             
-            print(f"Emotion tensor: {emotion_tensor}")
             cond_dict = make_cond_dict(
                 text=speaker_line.content,
                 language=voice_config["language_code"],
@@ -287,8 +346,12 @@ if __name__ == "__main__":
 
     init_logging()
 
-    podcast_speaker_queue = []
-    process_script("assets/sample_3.txt", podcast_speaker_queue)
+    # load chapters
+    with open("assets/chapters.txt", "r") as f:
+        chapters = f.read()
+    
+    prompts = load_prompts()
+    prompt = prompts[0]
 
     open_pc = OpenPodCraft()
     
@@ -299,5 +362,8 @@ if __name__ == "__main__":
     output_dir = "outputs/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     os.makedirs(output_dir, exist_ok=True)
 
-    # generate podcast
-    open_pc.generate_podcast(podcast_speaker_queue, output_dir=output_dir)
+    # generate and process popcast script
+    open_pc.generate_podcast_script(chapters, prompt)
+
+    # # generate podcast
+    open_pc.generate_podcast(open_pc.podcast_speaker_queue, output_dir=output_dir)

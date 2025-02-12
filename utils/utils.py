@@ -4,6 +4,7 @@ import re
 import ast
 import logging
 from datetime import datetime
+import yaml
 
 from typing import List
 
@@ -14,7 +15,53 @@ class ScriptLine(BaseModel):
     emotions_arr: List = []
 
 
-def process_script(script_filepath: str, queue: list[ScriptLine], speaker_match_expr:str = r"Speaker\s+(\S+)") -> None:
+def process_podcast_script_from_llm(llm_response: str, queue: list[ScriptLine]) -> None:
+    """
+    process the response from llm to extract the speaker and content for the podcast script
+    """
+
+    llm_response_list = llm_response.split("\n")
+    print(llm_response_list)
+    
+    speaker_pattern = r"Speaker\s+(\d+):"
+    emotion_pattern = r"Emotion:\s*(\[[^\]]+\])"
+    context_pattern = r"context:\s*(.+)"
+
+    for line in llm_response_list:
+        if not line:
+            continue
+
+        # Extract speaker ID
+        speaker_match = re.search(speaker_pattern, line)
+        speaker_id = speaker_match.group(1) if speaker_match else None
+
+        # Extract emotion list string and convert it to an actual Python list
+        emotion_match = re.search(emotion_pattern, line)
+        if emotion_match:
+            emotion_list_str = emotion_match.group(1)
+            # Safely evaluate the list string to a Python list
+            emotion_list = ast.literal_eval(emotion_list_str)
+        else:
+            emotion_list = None
+
+        # Extract context
+        context_match = re.search(context_pattern, line)
+        context = context_match.group(1).strip() if context_match else None
+        
+        # TODO: make it robust to script speaker name variations
+        # for now should do the work
+        # check if the line contains a colon to separate speaker ID and content
+        if speaker_id is not None or context is not None:
+            queue.append(
+                ScriptLine(
+                    speaker=f"Speaker {speaker_id}", 
+                    speaker_id=int(speaker_id), 
+                    content=context.strip(),
+                    emotions_arr=emotion_list,
+                )
+            )
+
+def process_script_from_txt(script_filepath: str, queue: list[ScriptLine], speaker_match_expr:str = r"Speaker\s+(\S+)") -> None:
     """
     process the script file to extract the speaker and content
     """
@@ -130,3 +177,8 @@ def init_logging():
 
     # Return the list handler for later use
     return list_handler
+
+def load_prompts(filename:str = "assets/prompts.yaml"):
+    with open(filename, "r") as file:
+        prompts = yaml.safe_load(file)
+    return prompts
