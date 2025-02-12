@@ -5,3 +5,4 @@ __pycache__
 Zonos
 outputs
 configs/default.json
+.gradio
