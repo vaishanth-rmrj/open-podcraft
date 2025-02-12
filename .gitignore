@@ -6,3 +6,4 @@ Zonos
 outputs
 configs/default.json
 .gradio
+.env
