@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List, Dict
 import logging
 import time
+import threading
 from dotenv import load_dotenv
 
 # fix package path for imports to work
@@ -26,12 +27,17 @@ class OpenPodCraft:
     def __init__(self):
         
         self.podcast_speaker_queue = []
+        self.chapters = None
+        prompts = load_prompts()
+        self.curr_prompt = prompts[0]
 
         self.config = load_config()
         self.available_voices = check_available_voices("assets/voices")
         
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        self.llm_model_type = "deepseek/deepseek-r1:free"
 
         # TTS model from Zyphra
         self.model = Zonos.from_pretrained(self.config.model_type, device=self.device)
@@ -41,6 +47,13 @@ class OpenPodCraft:
         self.voices = {}
         self.audio_buffers = []
         self.silence_audio_path = "assets/voices/silence_100ms.wav"
+
+        self.thread_queue = []
+
+        # TODO: imeplement gui to change this
+        # setting default voices
+        self.set_voice(1, "zonos_americanmale")
+        self.set_voice(2, "zonos_britishfemale")
 
         torch.manual_seed(421)
     
@@ -53,6 +66,18 @@ class OpenPodCraft:
             raise ValueError(f"{voice_name} voice not found!!")
         
         self.voices[speaker_id] = voice_name
+    
+    def get_podcast_script_as_dict(self) -> List[Dict]:
+        queue = []
+        for script_line in self.podcast_speaker_queue:
+            queue.append(
+                {
+                    "speaker": script_line.speaker,
+                    "speaker_id": script_line.speaker_id,
+                    "content": script_line.content
+                }
+            )
+        return queue            
     
     def generate_chapters(self, files:List, context:str, prompt:str) -> str:
         raise NotImplementedError("Generating chapters from files not yet implemented !!")
@@ -180,19 +205,6 @@ class OpenPodCraft:
 
             config = configs[voice]
             speakers_params[voice] = {}
-            # speakers_params[voice]["emotion_tensor"] = torch.tensor(
-            #     [[
-            #         float(config.emotion_params.happiness), 
-            #         float(config.emotion_params.sadness), 
-            #         float(config.emotion_params.disgust), 
-            #         float(config.emotion_params.fear), 
-            #         float(config.emotion_params.surprise), 
-            #         float(config.emotion_params.anger), 
-            #         float(config.emotion_params.other), 
-            #         float(config.emotion_params.neutral)
-            #     ]], 
-            #         device=self.device
-            # )
 
             vq_val = float(config.conditioning_params.vq_score)
             speakers_params[voice]["vq_tensor"] = torch.tensor([vq_val] * 8, device=self.device).unsqueeze(0)
@@ -341,6 +353,61 @@ class OpenPodCraft:
         self.audio_buffers = [] # clear audio buffer
         torchaudio.save(os.path.join(output_dir, "final.wav"), final_audio, self.model.autoencoder.sampling_rate)
         logging.info(f"Saving the entire podcast to: {os.path.join(output_dir, 'final.wav')}")
+    
+    def run_in_thread(self, fn_name:str) -> bool:
+
+        if len(self.thread_queue) > 0:
+            logging.info("Background threads running. Please stop other threads / processes !!")
+            return False
+
+        if fn_name == "generate_podcast_script":
+            if self.chapters is None:
+                logging.info(f"Chapters not found!! Try adding chapters fist.")
+                return False
+            
+            thread = threading.Thread(
+                target=self.generate_podcast_script,
+                args=[self.chapters, self.curr_prompt, self.llm_model_type],
+                daemon=True, 
+            )
+        
+        elif fn_name == "generate_podcast":
+            if len(self.podcast_speaker_queue) == 0:
+                logging.info(f"No prodcast script in queue!! Did you generate the script ?")
+                return False
+
+            output_dir = "outputs/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            os.makedirs(output_dir, exist_ok=True)
+            
+            thread = threading.Thread(
+                target=self.generate_podcast,
+                args=[self.podcast_speaker_queue, output_dir],
+                daemon=True, 
+            )
+        
+        else:
+            logging.info(f"Unknown function provided: {fn_name}")
+            return False
+
+        # start the thread and store it
+        self.thread_queue.append(thread)
+        thread.start()
+        return True
+
+    def stop_all_threads(self):
+        active_threads = len(self.thread_queue)
+        if active_threads > 0:
+            logging.info(f"{active_threads} background threads running. Terminating all threads !!")
+
+            for thread in self.thread_queue:
+                thread.join()
+                del thread           
+            
+        else:
+            logging.info(f"stop_threads : No background threads running. XD")
+                
+        return True if len(self.thread_queue) == 0 else False
+      
 
 if __name__ == "__main__":
 
