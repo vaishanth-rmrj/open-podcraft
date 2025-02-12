@@ -13,17 +13,16 @@ class DefaultUnconditionParams:
     skip_speaker: bool = False
     skip_emotion: bool = False
     skip_vqscore_8: bool = True
-    skip_fmax: bool = False
-    skip_pitch_std: bool = False
-    skip_speaking_rate: bool = False
+    skip_fmax: bool = True
+    skip_pitch_std: bool = True
+    skip_speaking_rate: bool = True
     skip_dnsmos_ovrl: bool = True
     skip_speaker_noised: bool = False
 
 @dataclass
 class DefaultGenerationParams:
-    cfg_scale: float = 2.0
-    min_p: float = 0.2
-    fmax: int = 22050
+    cfg_scale: float = 3.0
+    min_p: float = 0.1
     seed: int = 421
 
 @dataclass
@@ -32,10 +31,10 @@ class DefaultEmotionParams:
     sadness: float = 0.05
     disgust: float = 0.05
     fear: float = 0.05
-    surprise: float = 0.1
+    surprise: float = 0.15
     anger: float = 0.05
-    other: float = 0.5
-    neutral: float = 0.5
+    other: float = 0.1
+    neutral: float = 0.1
 
 @dataclass
 class DefaultConfig:

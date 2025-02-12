@@ -1,13 +1,17 @@
 from pathlib import Path
 from pydantic import BaseModel
 import re
+import ast
 import logging
 from datetime import datetime
+
+from typing import List
 
 class ScriptLine(BaseModel):
     speaker: str
     speaker_id: int = 0
     content: str
+    emotions_arr: List = []
 
 
 def process_script(script_filepath: str, queue: list[ScriptLine], speaker_match_expr:str = r"Speaker\s+(\S+)") -> None:
@@ -17,24 +21,54 @@ def process_script(script_filepath: str, queue: list[ScriptLine], speaker_match_
     # load the script file
     with open(script_filepath, "r") as f:
         script_lines = f.readlines()
+    
+    speaker_pattern = r"Speaker\s+(\d+):"
+    emotion_pattern = r"Emotion:\s*(\[[^\]]+\])"
+    context_pattern = r"context:\s*(.+)"
 
     for line in script_lines:
         if not line:
             continue
+
+        # Extract speaker ID
+        speaker_match = re.search(speaker_pattern, line)
+        speaker_id = speaker_match.group(1) if speaker_match else None
+
+        # Extract emotion list string and convert it to an actual Python list
+        emotion_match = re.search(emotion_pattern, line)
+        if emotion_match:
+            emotion_list_str = emotion_match.group(1)
+            # Safely evaluate the list string to a Python list
+            emotion_list = ast.literal_eval(emotion_list_str)
+        else:
+            emotion_list = None
+
+        # Extract context
+        context_match = re.search(context_pattern, line)
+        context = context_match.group(1).strip() if context_match else None
         
         # TODO: make it robust to script speaker name variations
         # for now should do the work
         # check if the line contains a colon to separate speaker ID and content
-        if ":" in line:
-            # split only at the first colon in case the content also contains colons
-            speaker, content = line.split(":", 1)
-            match = re.match(speaker_match_expr, speaker)
-            if not match:
-                raise ValueError(f"Invalid speaker str provided: {speaker}")
-            
+        if speaker_id is not None or context is not None:
             queue.append(
-                ScriptLine(speaker=speaker.strip(), speaker_id=int(match.group(1)), content=content.strip())
+                ScriptLine(
+                    speaker=f"Speaker {speaker_id}", 
+                    speaker_id=int(speaker_id), 
+                    content=context.strip(),
+                    emotions_arr=emotion_list,
+                )
             )
+        # if ":" in line:
+        #     # split only at the first colon in case the content also contains colons
+        #     speaker, content = line.split(":", 1)
+        #     match = re.match(speaker_match_expr, speaker)
+        #     if not match:
+        #         raise ValueError(f"Invalid speaker str provided: {speaker}")
+            
+        #     queue.append(
+        #         ScriptLine(speaker=speaker.strip(), speaker_id=int(match.group(1)), content=content.strip())
+        #     )
 
 def check_available_voices(dir_path: str):
     voices = {}
@@ -63,7 +97,7 @@ class ListHandler(logging.Handler):
     def emit(self, record):
         log_entry = self.format(record)
         self.log_list.append(log_entry)
-        
+
 # Function to initialize logging
 def init_logging():
     def custom_format(record):

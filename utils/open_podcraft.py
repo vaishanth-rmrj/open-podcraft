@@ -120,19 +120,19 @@ class OpenPodCraft:
 
             config = configs[voice]
             speakers_params[voice] = {}
-            speakers_params[voice]["emotion_tensor"] = torch.tensor(
-                [[
-                    float(config.emotion_params.happiness), 
-                    float(config.emotion_params.sadness), 
-                    float(config.emotion_params.disgust), 
-                    float(config.emotion_params.fear), 
-                    float(config.emotion_params.surprise), 
-                    float(config.emotion_params.anger), 
-                    float(config.emotion_params.other), 
-                    float(config.emotion_params.neutral)
-                ]], 
-                    device=self.device
-            )
+            # speakers_params[voice]["emotion_tensor"] = torch.tensor(
+            #     [[
+            #         float(config.emotion_params.happiness), 
+            #         float(config.emotion_params.sadness), 
+            #         float(config.emotion_params.disgust), 
+            #         float(config.emotion_params.fear), 
+            #         float(config.emotion_params.surprise), 
+            #         float(config.emotion_params.anger), 
+            #         float(config.emotion_params.other), 
+            #         float(config.emotion_params.neutral)
+            #     ]], 
+            #         device=self.device
+            # )
 
             vq_val = float(config.conditioning_params.vq_score)
             speakers_params[voice]["vq_tensor"] = torch.tensor([vq_val] * 8, device=self.device).unsqueeze(0)
@@ -166,7 +166,7 @@ class OpenPodCraft:
 
         return speakers_embedding, speakers_params
     
-    def get_audio_prefix(self, prefix_audio_path:str, overlap_time_s:float = 1.0):
+    def get_audio_prefix(self, prefix_audio_path: str, overlap_time_ms: int = 100):
         """
         audio prefix is used for smooth transitioning of audio chunks
 
@@ -182,23 +182,25 @@ class OpenPodCraft:
         metadata = torchaudio.info(prefix_audio_path)
         sample_rate, num_frames = metadata.sample_rate, metadata.num_frames 
 
-        # calc the frame offset to start loading from the last n seconds
-        frame_offset = max(0, num_frames - int(overlap_time_s) * sample_rate)
+        # Calculate the frame offset to start loading from the last overlap_time_ms milliseconds
+        frame_offset = max(0, num_frames - int((overlap_time_ms / 1000) * sample_rate))
 
         # load prefix audio with last overlap_time_s
         wav_prefix, sr_prefix = torchaudio.load(prefix_audio_path, frame_offset=frame_offset)
         wav_prefix = wav_prefix.mean(0, keepdim=True)
         wav_prefix = torchaudio.functional.resample(wav_prefix, sr_prefix, self.model.autoencoder.sampling_rate)
         wav_prefix = wav_prefix.to(self.device, dtype=torch.float32)
+
         with torch.autocast(self.device, dtype=torch.float32):
             audio_prefix_codes = self.model.autoencoder.encode(wav_prefix.unsqueeze(0))
+        
         return audio_prefix_codes
 
     def generate_podcast(
             self, 
             speaker_queue:List[ScriptLine],            
             output_dir:str,
-            audio_overlap_duration_s: float = 1.0,
+            audio_overlap_duration_ms: int = 100,
         ):
 
         num_speakers, voice_names = self.fetch_speaker_info(speaker_queue)
@@ -221,12 +223,27 @@ class OpenPodCraft:
             voice_name = self.voices[speaker_line.speaker_id]
             speaker_embedding = speakers_embedding[voice_name]
             voice_config = speakers_params[voice_name]
+
+            emotion_tensor = torch.tensor(
+                [[
+                    float(speaker_line.emotions_arr[0]), 
+                    float(speaker_line.emotions_arr[1]), 
+                    float(speaker_line.emotions_arr[2]), 
+                    float(speaker_line.emotions_arr[3]), 
+                    float(speaker_line.emotions_arr[4]), 
+                    float(speaker_line.emotions_arr[5]), 
+                    float(0.1), 
+                    float(0.1)
+                ]], 
+                    device=self.device
+            )
             
+            print(f"Emotion tensor: {emotion_tensor}")
             cond_dict = make_cond_dict(
                 text=speaker_line.content,
                 language=voice_config["language_code"],
                 speaker=speaker_embedding,
-                emotion=voice_config["emotion_tensor"],
+                emotion=emotion_tensor,
                 vqscore_8=voice_config["vq_tensor"],
                 fmax=voice_config["fmax"],
                 pitch_std=voice_config["pitch_std"],
@@ -238,7 +255,7 @@ class OpenPodCraft:
             )
             conditioning = self.model.prepare_conditioning(cond_dict)
 
-            audio_prefix_codes = self.get_audio_prefix(prefix_audio_path, audio_overlap_duration_s)
+            audio_prefix_codes = self.get_audio_prefix(prefix_audio_path, audio_overlap_duration_ms)
             # generating the audio
             codes = self.model.generate(
                 prefix_conditioning=conditioning,
@@ -251,8 +268,8 @@ class OpenPodCraft:
 
             wavs = self.model.autoencoder.decode(codes).cpu()
             if line_id > 0:
-                # self.audio_buffers.append(wavs[0][:, overlap_samples:])
-                self.audio_buffers.append(wavs[0])
+                overlap_slice_index = int((audio_overlap_duration_ms / 1000) * self.model.autoencoder.sampling_rate)
+                self.audio_buffers.append(wavs[0][:, overlap_slice_index:])
             else:
                 self.audio_buffers.append(wavs[0])
 
@@ -271,7 +288,7 @@ if __name__ == "__main__":
     init_logging()
 
     podcast_speaker_queue = []
-    process_script("assets/sample_podcast_script.txt", podcast_speaker_queue)
+    process_script("assets/sample_3.txt", podcast_speaker_queue)
 
     open_pc = OpenPodCraft()
     
@@ -283,4 +300,4 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
 
     # generate podcast
-    open_pc.generate_podcast(podcast_speaker_queue[:6], output_dir=output_dir)
+    open_pc.generate_podcast(podcast_speaker_queue, output_dir=output_dir)
