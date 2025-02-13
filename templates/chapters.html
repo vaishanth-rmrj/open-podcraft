@@ -1,30 +1,116 @@
-<div class="mb-3">
-    <button type="button" class="btn btn-success" id="generatePodcastScriptBtn">Generate Script</button>
-</div>
+<div class="container-fluid">    
+    <form action="/api/generate_podcast_script" method="POST" id="podcastChaptersForm">
+        
+        <div class="row mb-3">
+            <div class="col-8">
+                <!-- podcast title -->   
+                <div class="">
+                    <input type="text" 
+                           class="form-control fs-2 border-0 shadow-none" 
+                           name="title" 
+                           placeholder="Untitled Podcast">
+                  </div>
 
-<form action="/api/generate_podcast_script" method="POST" id="podcastChaptersForm">
+                <!-- description -->                
+                <div class="mb-3" sty>
+                    <textarea 
+                      class="form-control fs-8 border-0 shadow-none" 
+                      name="description" 
+                      placeholder="Description of the podcast" 
+                      rows="3" 
+                      style="height: 80px; overflow:hidden;"
+                      maxlength="300"                      
+                    ></textarea>
 
-    <!-- podcast title -->   
-    <div class="mb-3">
-        <input type="text" class="form-control" name="title" placeholder="Untitled Podcast">
-    </div>
+                    <div class="d-flex justify-content-end">
+                        <small class="form-text text-muted">Max 300 characters</small>
+                    </div>
+                    
+                </div>
 
-    <!-- podcast description -->
-    <!-- <div class="w-200 min-w-[200px] mt-8">
-        <textarea
-            placeholder="Description for the podcast"
-            class="peer h-full min-h-[50px] w-full resize-none border-blue-gray-200 bg-transparent pt-4 pb-1.5 font-sans text-md font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border-blue-gray-200 focus:border-gray-900 focus:outline-0 disabled:resize-none disabled:border-0 disabled:bg-blue-gray-50">
-        </textarea>
-    </div> -->
-    
-    <!-- chapters -->
-    <div class="mb-3">
-        <textarea 
-            class="form-control" 
-            name="content" 
-            placeholder="Type in the chapters you want to discuss in the podcast" 
-            rows="3"
-            style="height: 600px;"
-        ></textarea>
-    </div>
-</form>            
+                <!-- chapters -->
+                <div class="mb-3">
+                    <textarea 
+                      class="form-control fs-5 border-0 shadow-none" 
+                      name="content" 
+                      placeholder="CHAPTER 1: INTRODUCTION&#10;     • Content 1: Add your contents here&#10;     • Content 2: Add your contents here&#10;&#10;CHAPTER 2: MAIN TOPIC&#10;      • Content 1: Add your contents here&#10;     • Content 2: Add your contents here" 
+                      rows="3" 
+                      style="height: 600px;"                      
+                    ></textarea>
+                  </div>
+
+            </div>
+
+            <div class="col-4">
+                <div class="card border-0" style="width: 100%;">
+                    <div class="card-body">
+                        <h5 class="card-title">Settings</h5>
+                        <hr class="mb-4">
+                      
+                        <div class="mb-4">
+                            <label for="extraPrompt" class="form-label text-secondary">Customize prompt</label>
+                            <textarea 
+                              class="form-control" 
+                              id="extraPrompt"
+                              name="extra_prompt" 
+                              placeholder="Additional prompt details:&#10;&#8226; Focus on a specific topic (e.g., &quot;topic name&quot;)&#10;&#8226; Focus on a specific audience (e.g., &quot;audience type&quot;)"
+                              rows="3"
+                              style="height: 100px;"
+                            ></textarea>
+                          </div>
+                        
+                        <div class="mb-4">
+                            <label for="llmModelSelect" class="form-label text-secondary">LLM Model for script generation</label>
+                            <select class="form-select" id="llmModelSelect" aria-label="Default select example">
+                                <option selected value="Deepseek">Deepseek</option>
+                                <option value="Mistral">Mistral</option>
+                            </select>
+                        </div>                             
+                        
+                        <div class="mb-4">
+                            <label for="numSpeakers" class="form-label d-flex justify-content-between text-secondary">
+                              Number of Speakers
+                              <span id="numSpeakersDisplay" class="badge bg-primary d-flex align-items-center justify-content-center" style="width: 1.5rem; height: 1.5rem;">2</span>
+                            </label>
+                            <input type="range" 
+                                   class="form-range" 
+                                   name="num_speakers" 
+                                   min="2" 
+                                   max="4" 
+                                   step="1" 
+                                   id="numSpeakers" 
+                                   value="2"
+                                   oninput="document.getElementById('numSpeakersDisplay').innerText = this.value">
+                          </div>
+
+                        <div class="mb-4">
+                            <label for="podcastLength" class="form-label d-flex justify-content-between text-secondary">
+                                Podcast Length
+                                <span id="podcastLengthDisplay" class="badge bg-primary d-flex align-items-center justify-content-center" style="min-width: 3rem; height: 2rem;">10 min</span>
+                            </label>
+                            <input type="range" 
+                                    class="form-range" 
+                                    name="podcast_len" 
+                                    min="5" 
+                                    max="30" 
+                                    step="5" 
+                                    id="podcastLength" 
+                                    value="10"
+                                    oninput="document.getElementById('podcastLengthDisplay').innerText = this.value+ ' min'">
+                        </div>
+                        
+                        <div class="d-flex justify-content-center mb-4">
+                            <button type="button" class="btn btn-success" id="generatePodcastScriptBtn"
+                              style="background: linear-gradient(45deg, #28a745, #218838); border: none; color: #fff; box-shadow: 0 0 16px rgba(40, 167, 69, 0.8); transition: transform 0.3s ease-in-out;"
+                              onmouseover="this.style.transform='scale(1.05)';"
+                              onmouseout="this.style.transform='scale(1)';"
+                            >
+                              Generate Script
+                            </button>
+                          </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>     
+</div>       
