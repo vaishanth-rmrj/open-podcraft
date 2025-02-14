@@ -1,102 +1,77 @@
-
-
-
-document.getElementById('generatePodcastScriptBtn')
-.addEventListener('click', async (event) => {
-    event.preventDefault();
-
-    const chaptersForm = document.getElementById('podcastChaptersForm');
-    const formData = new FormData(chaptersForm);
-    const response = await fetch(chaptersForm.action, {
-        method: chaptersForm.method,
-        body: formData
-    });
-
-    if (response.ok) {
-        alert('Generating podcast script');
-    } else {
-        alert('Error generating podcast script!!');
-    }
-});
-
-async function populatePodcastScript(){
-    const container = document.getElementById("podcastLinesDisplay");
+// Function to load podcasts from the backend
+async function loadPodcasts() {
 
     try {
 
-        const response = await fetch("/api/get_podcast_script");
-        const dataList = await response.json();
+      const response = await fetch("/api/podcasts/get");
+      const podcasts = await response.json();
+      const podcastList = document.getElementById("podcastList");
 
-        container.innerHTML = "";
-        // populate the container with cards
-        dataList.forEach(data => {
+      if (podcasts.length === 0) {
+        podcastList.innerHTML = '<div class="alert alert-info">No podcasts are present.</div>';
+
+      } else {
+        console.log(podcasts);
+        podcasts.forEach(podcast => {            
 
             const row = document.createElement("div");
-            row.className = "row";
+            row.className = "container border p-4 mb-4";
 
-            const speakerNameCol = document.createElement("div");
-            speakerNameCol.className = "col-2";
+            const podcastsTile = document.createElement("strong");
+            podcastsTile.textContent = podcast.title;
+            row.appendChild(podcastsTile);
 
-            const speakerName = document.createElement("strong");
-            speakerName.textContent = data.speaker;
-            speakerNameCol.appendChild(speakerName);
-            
-            const speakerTextCol = document.createElement("div");
-            speakerTextCol.className = "col-10";
-
-            const speakerText = document.createElement("p");
-            speakerText.textContent = data.content;
-            speakerTextCol.appendChild(speakerText);
-
-            row.append(speakerNameCol);
-            row.append(speakerTextCol);
-            container.appendChild(row);
+            podcastList.appendChild(row);
         });
+      }
+
     } catch (error) {
-        console.error("Error getting script lines", error);
+      console.error("Error loading podcasts:", error);
     }
-};
+  }
 
-function checkPodcastScriptStatus() {
+// Call loadPodcasts on page load
+window.addEventListener("DOMContentLoaded", loadPodcasts);
 
-    const flagsCheckEventSource = new EventSource('/api/check_flags');
-    flagsCheckEventSource.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        console.log(data);
-        
+// Handle form submission inside the modal
+document.getElementById("podcastForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
 
-        const spinnerDisplay = document.getElementById("podcatScriptGenSpinner");
-        const notFoundMsgDisplay = document.getElementById("notFoundMsgDisplay");
-        const scriptLinesDisplay = document.getElementById("podcastLinesDisplay");
+    // Clear any previous alerts
+    document.getElementById("formAlert").innerHTML = "";
 
-        if (data.is_generating_script) {
-            
-            spinnerDisplay.classList.remove("d-none");
-            notFoundMsgDisplay.classList.add("d-none");
-            scriptLinesDisplay.classList.add("d-none");
+    // Gather form data
+    const title = document.getElementById("title").value;
+    // const description = document.getElementById("description").value;
 
-        } 
-        if (!data.is_generating_script && !data.is_script_available){
+    const data = {title};
 
-            spinnerDisplay.classList.add("d-none");
-            notFoundMsgDisplay.classList.remove("d-none");
-            scriptLinesDisplay.classList.add("d-none");
+    try {
 
-        } 
-        if (data.is_script_available) {
-            console.log(data.is_script_available);
-            spinnerDisplay.classList.add("d-none");
-            notFoundMsgDisplay.classList.add("d-none");
-            scriptLinesDisplay.classList.remove("d-none");
-            populatePodcastScript();
-        }
+      const response = await fetch("/api/podcasts/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
 
+      const result = await response.json();
 
-    };
+      if (response.ok) {
+        // Close the modal programmatically
+        const modalEl = document.getElementById("podcastModal");
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
 
-    flagsCheckEventSource.onerror = function(error) {
-        console.error("Error with EventSource:", error);
-        flagsCheckEventSource.close();
-    };
-}
-checkPodcastScriptStatus();
+        // Reset the form
+        document.getElementById("podcastForm").reset();
+        // Refresh the podcasts list
+        loadPodcasts();
+      } else {
+        document.getElementById("formAlert").innerHTML = `<div class="alert alert-danger">${result.detail || "Error creating podcast"}</div>`;
+      }
+    } catch (error) {
+      document.getElementById("formAlert").innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
+  });
