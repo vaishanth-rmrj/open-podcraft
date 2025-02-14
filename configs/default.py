@@ -2,28 +2,28 @@ from dataclasses import dataclass, field, asdict
 
 @dataclass
 class DefaultConditioningParams:
-    dnsmos_ovrl: int = 4
-    vq_score: float = 0.78
+    dnsmos_ovrl: int = 3
+    vq_score: float = 0.72
     fmax: int = 22050
-    pitch_std: int = 20
+    pitch_std: int = 300
     speaking_rate: int = 15
 
 @dataclass
 class DefaultUnconditionParams:
     skip_speaker: bool = False
     skip_emotion: bool = False
-    skip_vqscore_8: bool = True
-    skip_fmax: bool = True
-    skip_pitch_std: bool = True
+    skip_vqscore_8: bool = False
+    skip_fmax: bool = False
+    skip_pitch_std: bool = False
     skip_speaking_rate: bool = True
-    skip_dnsmos_ovrl: bool = True
+    skip_dnsmos_ovrl: bool = False
     skip_speaker_noised: bool = False
 
 @dataclass
 class DefaultGenerationParams:
-    cfg_scale: float = 3.0
-    min_p: float = 0.1
-    seed: int = 421
+    cfg_scale: float = 3.5
+    min_p: float = 0.0
+    seed: int = 420
 
 @dataclass
 class DefaultEmotionParams:
@@ -31,10 +31,10 @@ class DefaultEmotionParams:
     sadness: float = 0.05
     disgust: float = 0.05
     fear: float = 0.05
-    surprise: float = 0.15
+    surprise: float = 0.05
     anger: float = 0.05
-    other: float = 0.1
-    neutral: float = 0.1
+    other: float = 0.05
+    neutral: float = 0.05
 
 @dataclass
 class DefaultConfig:
@@ -43,5 +43,5 @@ class DefaultConfig:
     generation_params: DefaultGenerationParams = field(default_factory=DefaultGenerationParams)
     emotion_params: DefaultEmotionParams = field(default_factory=DefaultEmotionParams)
     language_code: str = "en-us"
-    model_type: str = "Zyphra/Zonos-v0.1-transformer" #"Zyphra/Zonos-v0.1-hybrid"
+    model_type: str =  "Zyphra/Zonos-v0.1-hybrid" #"Zyphra/Zonos-v0.1-transformer"
     speaker_noised_bool: bool = False
