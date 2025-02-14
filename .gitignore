@@ -8,3 +8,4 @@ configs/default.json
 .gradio
 .env
 static/voices/custom
+podcasts.db

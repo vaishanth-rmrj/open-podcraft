@@ -5,13 +5,18 @@ import logging
 import signal
 import asyncio
 import uuid
-from typing import List, Dict
+from typing import List, Dict, Any
+from pydantic import BaseModel
 
-from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException
+from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, HTMLResponse, StreamingResponse, JSONResponse
 import uvicorn
+
+from sqlalchemy import create_engine, Column, Integer, String, JSON
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
 
 # project imports
 from utils.util import init_logging
@@ -20,6 +25,12 @@ from utils.open_podcraft import OpenPodCraft
 # global vars
 open_pc = OpenPodCraft()
 is_shutdown = False
+
+# database configuration (SQLite)
+DATABASE_URL = "sqlite:///./podcasts.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
 app = FastAPI()
 static_files = StaticFiles(
@@ -30,7 +41,33 @@ app.mount("/static", static_files, name='static')
 # templates directory
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), 'templates'))
 
+# SQLAlchemy model for a Podcast
+class PodcastDB(Base):
+    __tablename__ = "podcasts"
+    id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    title = Column(String, nullable=False)
+    # Mark other fields as nullable so they can be empty initially
+    description = Column(String, nullable=True)
+    chapters = Column(String, nullable=True)
+    transcript = Column(String, nullable=True)
+    voice_names = Column(JSON, nullable=True)
+    settings = Column(JSON, nullable=True)
 
+# Create the table(s)
+Base.metadata.create_all(bind=engine)
+
+# Pydantic model for request validation
+class Podcast(BaseModel):
+    title: str
+    description: str
+    chapters: str
+    transcript: str
+    voice_names: List[str]
+    settings: Dict[str, Any]
+
+class PodcastTitle(BaseModel):
+    title: str
+    
 #### common api ####
 @app.get("/", response_class=HTMLResponse)
 async def index_page(request: Request):
@@ -39,6 +76,53 @@ async def index_page(request: Request):
 @app.get("/voices", response_class=HTMLResponse)
 async def index_page(request: Request):
     return templates.TemplateResponse("voices.html", {"request": request})
+
+# Dependency to get DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# POST endpoint to create a new podcast entry
+@app.post("/api/podcasts/create")
+def create_podcast(podcast: PodcastTitle, db: Session = Depends(get_db)):
+    # Use default values for other fields
+    db_podcast = PodcastDB(
+        title=podcast.title,
+        description="",    # Default empty string
+        chapters="",       # Default empty string
+        transcript="",     # Default empty string
+        voice_names=[],    # Default empty list
+        settings={}        # Default empty dict
+    )
+    db.add(db_podcast)
+    db.commit()
+    db.refresh(db_podcast)
+    return {"message": "Podcast created", "id": db_podcast.id}
+
+# POST endpoint to create a new podcast entry
+# @app.post("/api/podcasts/create")
+# def create_podcast(podcast: Podcast, db: Session = Depends(get_db)):
+#     db_podcast = PodcastDB(
+#         title=podcast.title,
+#         description=podcast.description,
+#         chapters=podcast.chapters,
+#         transcript=podcast.transcript,
+#         voice_names=podcast.voice_names,
+#         settings=podcast.settings,
+#     )
+#     db.add(db_podcast)
+#     db.commit()
+#     db.refresh(db_podcast)
+#     return {"message": "Podcast created", "id": db_podcast.id}
+
+# Optional: GET endpoint to list all podcasts (for testing)
+@app.get("/api/podcasts/get")
+def read_podcasts(db: Session = Depends(get_db)):
+    podcasts = db.query(PodcastDB).all()
+    return podcasts
 
 
 @app.post("/api/generate_podcast_script")
