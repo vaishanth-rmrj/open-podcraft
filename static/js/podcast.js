@@ -1,111 +1,98 @@
 
-
-
 document.getElementById('generatePodcastScriptBtn')
 .addEventListener('click', async (event) => {
-    event.preventDefault();
+  event.preventDefault();
 
-    const chaptersForm = document.getElementById('podcastChaptersForm');
-    const formData = new FormData(chaptersForm);
-    const response = await fetch(chaptersForm.action, {
-        method: chaptersForm.method,
-        body: formData
-    });
+  const chaptersForm = document.getElementById('podcastChaptersForm');
+  const formData = new FormData(chaptersForm);
+  const response = await fetch(chaptersForm.action, {
+      method: chaptersForm.method,
+      body: formData
+  });
 
-    if (response.ok) {
-        alert('Generating podcast script');
-    } else {
-        alert('Error generating podcast script!!');
-    }
+  if (response.ok) {
+      alert('Generating podcast script');
+  } else {
+      alert('Error generating podcast script!!');
+  }
 });
 
 async function populatePodcastScript(){
-    const container = document.getElementById("podcastLinesDisplay");
+  const container = document.getElementById("podcastLinesDisplay");
 
-    try {
+  try {
 
-        const response = await fetch("/api/get_podcast_script");
-        const dataList = await response.json();
+      const response = await fetch("/api/get_podcast_script");
+      const dataList = await response.json();
 
-        container.innerHTML = "";
-        // populate the container with cards
-        dataList.forEach(data => {
-
-            const row = document.createElement("div");
-            row.className = "row";
-
-            const speakerNameCol = document.createElement("div");
-            speakerNameCol.className = "col-2";
-
-            const speakerName = document.createElement("strong");
-            speakerName.textContent = data.speaker;
-            speakerNameCol.appendChild(speakerName);
-            
-            const speakerTextCol = document.createElement("div");
-            speakerTextCol.className = "col-10";
-
-            const speakerText = document.createElement("p");
-            speakerText.textContent = data.content;
-            speakerTextCol.appendChild(speakerText);
-
-            row.append(speakerNameCol);
-            row.append(speakerTextCol);
-            container.appendChild(row);
-        });
-    } catch (error) {
-        console.error("Error getting script lines", error);
-    }
+      container.innerHTML = "";
+      dataList.forEach(data => {
+        const newContent = `
+            <div class="row">
+                <div class="col-2">
+                    <strong>${data.speaker}</strong>
+                </div>
+                <div class="col-10">
+                    <p>${data.content}</p>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML("beforeend", newContent);
+    });
+  } catch (error) {
+      console.error("Error getting script lines", error);
+  }
 };
 
 function checkPodcastScriptStatus() {
 
-    const flagsCheckEventSource = new EventSource('/api/check_flags');
-    flagsCheckEventSource.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        console.log(data);
-        
+  const flagsCheckEventSource = new EventSource('/api/check_flags');
+  flagsCheckEventSource.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      console.log(data);
+      
 
-        const spinnerDisplay = document.getElementById("podcatScriptGenSpinner");
-        const notFoundMsgDisplay = document.getElementById("notFoundMsgDisplay");
-        const scriptLinesDisplay = document.getElementById("podcastLinesDisplay");
+      const spinnerDisplay = document.getElementById("podcatScriptGenSpinner");
+      const notFoundMsgDisplay = document.getElementById("notFoundMsgDisplay");
+      const scriptLinesDisplay = document.getElementById("podcastLinesDisplay");
 
-        if (data.is_generating_script) {
-            
-            spinnerDisplay.classList.remove("d-none");
-            notFoundMsgDisplay.classList.add("d-none");
-            scriptLinesDisplay.classList.add("d-none");
+      if (data.is_generating_script) {
+          
+          spinnerDisplay.classList.remove("d-none");
+          notFoundMsgDisplay.classList.add("d-none");
+          scriptLinesDisplay.classList.add("d-none");
 
-        } 
-        if (!data.is_generating_script && !data.is_script_available){
+      } 
+      if (!data.is_generating_script && !data.is_script_available){
 
-            spinnerDisplay.classList.add("d-none");
-            notFoundMsgDisplay.classList.remove("d-none");
-            scriptLinesDisplay.classList.add("d-none");
+          spinnerDisplay.classList.add("d-none");
+          notFoundMsgDisplay.classList.remove("d-none");
+          scriptLinesDisplay.classList.add("d-none");
 
-        } 
-        if (data.is_script_available) {
-            console.log(data.is_script_available);
-            spinnerDisplay.classList.add("d-none");
-            notFoundMsgDisplay.classList.add("d-none");
-            scriptLinesDisplay.classList.remove("d-none");
-            populatePodcastScript();
-        }    
-        
-        if (data.is_generating_podcast) {            
-            showGeneratingAnimationPodcastAudio();
-        }     
+      } 
+      if (data.is_script_available) {
+          console.log(data.is_script_available);
+          spinnerDisplay.classList.add("d-none");
+          notFoundMsgDisplay.classList.add("d-none");
+          scriptLinesDisplay.classList.remove("d-none");
+          populatePodcastScript();
+      }    
+      
+      if (data.is_generating_podcast) {            
+          showGeneratingAnimationPodcastAudio();
+      }     
 
-        if (data.is_podcast_available) {
-            const podcastAudioPlayerProgressBar = document.getElementById("podcastAudioPlayerProgressBar");
-            podcastAudioPlayerProgressBar.classList.add("d-none");
-            fetchAndUpdateAudioUrl();
-        }
-    };
+      if (data.is_podcast_available) {
+          const podcastAudioPlayerProgressBar = document.getElementById("podcastAudioPlayerProgressBar");
+          podcastAudioPlayerProgressBar.classList.add("d-none");
+          fetchAndUpdateAudioUrl();
+      }
+  };
 
-    flagsCheckEventSource.onerror = function(error) {
-        console.error("Error with EventSource:", error);
-        flagsCheckEventSource.close();
-    };
+  flagsCheckEventSource.onerror = function(error) {
+      console.error("Error with EventSource:", error);
+      flagsCheckEventSource.close();
+  };
 }
 checkPodcastScriptStatus();
 
@@ -229,68 +216,64 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
-  function fetchAndUpdateAudioUrl() {
-    // Get references to the UI elements
-    const playPauseBtn = document.getElementById("playPauseBtn");
-    const rewindBtn = document.getElementById("rewindBtn");
-    const forwardBtn = document.getElementById("forwardBtn");
-    const progressContainer = document.getElementById("progressContainer");
-    const stopBtn = document.getElementById("stopBtn");
-    const audioPlayer = document.getElementById("audioPlayer");
-  
-    // The UI is already in the initial "stopped" state:
-    //   - Controls (play, rewind, forward, progress) are hidden.
-    //   - Stop button is visible.
-  
-    // Send a GET request to fetch the audio URL.
-    fetch("/api/get_podcast_audio_url")
-      .then(response => {
-        if (!response.ok) {
-          throw new Error("Failed to fetch audio URL");
-        }
-        return response.json();
-      })
-      .then(data => {
-        // Assume the API returns a JSON object with an "audio_url" property.
-        const audioUrl = data.audio_url;
-        if (audioUrl) {
-          // Update the audio element's source and load the new URL
-          audioPlayer.src = audioUrl;
-          audioPlayer.load();
-  
-          // Revert UI to normal audio player view:
-          // Hide the red stop button and show all controls.
-          stopBtn.style.display = "none";
-          playPauseBtn.style.display = "inline-block";
-          rewindBtn.style.display = "inline-block";
-          forwardBtn.style.display = "inline-block";
-          progressContainer.style.display = "block";
-        } else {
-          console.error("No audio URL found in response");
-        }
-      })
-      .catch(error => {
-        console.error("Error fetching audio URL:", error);
-        // Optionally, you can keep the red stop button visible or show an error message.
-      });
-  }
+function fetchAndUpdateAudioUrl() {
+  // Get references to the UI elements
+  const playPauseBtn = document.getElementById("playPauseBtn");
+  const rewindBtn = document.getElementById("rewindBtn");
+  const forwardBtn = document.getElementById("forwardBtn");
+  const progressContainer = document.getElementById("progressContainer");
+  const stopBtn = document.getElementById("stopBtn");
+  const audioPlayer = document.getElementById("audioPlayer");
 
-  function showGeneratingAnimationPodcastAudio() {
-    // Get references to the UI elements
-    const playPauseBtn = document.getElementById("playPauseBtn");
-    const rewindBtn = document.getElementById("rewindBtn");
-    const forwardBtn = document.getElementById("forwardBtn");
-    const progressContainer = document.getElementById("progressContainer");
-    const stopBtn = document.getElementById("stopBtn");
-    const audioPlayer = document.getElementById("audioPlayer");
-    const podcastAudioPlayerProgressBar = document.getElementById("podcastAudioPlayerProgressBar");
-    
-    podcastAudioPlayerProgressBar.classList.remove("d-none");
-    stopBtn.style.display = "inline-block";
-    playPauseBtn.style.display = "none";
-    rewindBtn.style.display = "none";
-    forwardBtn.style.display = "none";
-    progressContainer.style.display = "none";
-  }
+  // Send a GET request to fetch the audio URL.
+  fetch("/api/get_podcast_audio_url")
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Failed to fetch audio URL");
+      }
+
+      return response.json();
+    })
+    .then(data => {
+      const audioUrl = data.audio_url;
+      if (audioUrl) {
+        
+        // Update the audio element's source and load the new URL
+        audioPlayer.src = audioUrl;
+        audioPlayer.load();
+
+        stopBtn.style.display = "none";
+        playPauseBtn.style.display = "inline-block";
+        rewindBtn.style.display = "inline-block";
+        forwardBtn.style.display = "inline-block";
+        progressContainer.style.display = "block";
+
+      } else {
+        console.error("No audio URL found in response");
+
+      }
+    })
+    .catch(error => {
+      console.error("Error fetching audio URL:", error);
+
+    });
+}
+
+function showGeneratingAnimationPodcastAudio() {
+
+  const playPauseBtn = document.getElementById("playPauseBtn");
+  const rewindBtn = document.getElementById("rewindBtn");
+  const forwardBtn = document.getElementById("forwardBtn");
+  const progressContainer = document.getElementById("progressContainer");
+  const stopBtn = document.getElementById("stopBtn");
+  const podcastAudioPlayerProgressBar = document.getElementById("podcastAudioPlayerProgressBar");
+  
+  podcastAudioPlayerProgressBar.classList.remove("d-none");
+  stopBtn.style.display = "inline-block";
+  playPauseBtn.style.display = "none";
+  rewindBtn.style.display = "none";
+  forwardBtn.style.display = "none";
+  progressContainer.style.display = "none";
+}
   
   

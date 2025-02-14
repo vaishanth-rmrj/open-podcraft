@@ -1,53 +1,49 @@
 // Function to load podcasts from the backend
 async function loadPodcasts() {
 
-    try {
+  try {
 
-      const response = await fetch("/api/podcasts/get");
-      const podcasts = await response.json();
-      const podcastList = document.getElementById("podcastList");
+    const response = await fetch("/api/podcasts/get");
+    const podcasts = await response.json();
+    const podcastList = document.getElementById("podcastList");
 
-      if (podcasts.length === 0) {
-        podcastList.innerHTML = '<div class="alert alert-info">No podcasts are present.</div>';
+    if (podcasts.length === 0) {
+      podcastList.innerHTML = `
+        <div class="alert alert-info">
+          No podcasts are present.
+        </div>
+      `;
 
-      } else {
-        console.log(podcasts);
-        podcasts.forEach(podcast => {     
-            
-            const anchorTag = document.createElement("a");
-            anchorTag.href = `/podcasts/${podcast.id}`
-
-            const row = document.createElement("div");
-            row.className = "container border p-4 mb-4";            
-
-            const podcastsTile = document.createElement("strong");
-            podcastsTile.textContent = podcast.title;
-            
-            row.appendChild(podcastsTile);
-            anchorTag.appendChild(row);
-            podcastList.appendChild(anchorTag);
-        });
-      }
-
-    } catch (error) {
-      console.error("Error loading podcasts:", error);
+    } else {
+      podcasts.forEach(podcast => {
+        const newContent = `
+            <a href="/podcasts/${podcast.id}" class="text-decoration-none text-reset">
+                <div class="container border rounded p-4 mb-4">
+                    <img src="/static/images/audio_player_background.webp" alt="${podcast.title}" class="rounded me-3" width="50" height="50">
+                    <strong>${podcast.title}</strong>
+                </div>
+            </a>
+        `;
+        podcastList.insertAdjacentHTML("beforeend", newContent);
+      });
     }
-  }
 
+  } catch (error) {
+    console.error("Error loading podcasts:", error);
+  }
+}
 // Call loadPodcasts on page load
 window.addEventListener("DOMContentLoaded", loadPodcasts);
 
-// Handle form submission inside the modal
+// create podcast using modal
 document.getElementById("podcastForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
-    // Clear any previous alerts
+    // clear previous alerts
     document.getElementById("formAlert").innerHTML = "";
 
     // Gather form data
     const title = document.getElementById("title").value;
-    // const description = document.getElementById("description").value;
-
     const data = {title};
 
     try {
@@ -67,15 +63,24 @@ document.getElementById("podcastForm").addEventListener("submit", async function
         const modalEl = document.getElementById("podcastModal");
         const modal = bootstrap.Modal.getInstance(modalEl);
         modal.hide();
+        
+        document.getElementById("podcastForm").reset(); // reset the form        
+        loadPodcasts(); // refresh the podcasts list
 
-        // Reset the form
-        document.getElementById("podcastForm").reset();
-        // Refresh the podcasts list
-        loadPodcasts();
       } else {
-        document.getElementById("formAlert").innerHTML = `<div class="alert alert-danger">${result.detail || "Error creating podcast"}</div>`;
+        document.getElementById("formAlert").innerHTML = `
+          <div class="alert alert-danger">
+            ${result.detail || "Error creating podcast"}
+          </div>
+        `;
+
       }
     } catch (error) {
-      document.getElementById("formAlert").innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+      document.getElementById("formAlert").innerHTML = `
+        <div class="alert alert-danger">
+          Error: ${error.message}
+        </div>
+      `;
+
     }
   });
