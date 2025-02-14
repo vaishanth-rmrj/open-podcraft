@@ -8,7 +8,7 @@ import uuid
 from typing import List, Dict, Any
 from pydantic import BaseModel
 
-from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException, Depends
+from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException, Depends, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, HTMLResponse, StreamingResponse, JSONResponse
@@ -49,7 +49,7 @@ class PodcastDB(Base):
     # Mark other fields as nullable so they can be empty initially
     description = Column(String, nullable=True)
     chapters = Column(String, nullable=True)
-    transcript = Column(String, nullable=True)
+    transcript = Column(JSON, nullable=True)
     voice_names = Column(JSON, nullable=True)
     settings = Column(JSON, nullable=True)
 
@@ -93,7 +93,7 @@ def create_podcast(podcast: PodcastTitle, db: Session = Depends(get_db)):
         title=podcast.title,
         description="",    # Default empty string
         chapters="",       # Default empty string
-        transcript="",     # Default empty string
+        transcript=[],     # Default empty list
         voice_names=[],    # Default empty list
         settings={}        # Default empty dict
     )
@@ -124,13 +124,53 @@ def read_podcasts(db: Session = Depends(get_db)):
     podcasts = db.query(PodcastDB).all()
     return podcasts
 
+@app.get("/podcasts/{podcast_id}")
+def read_podcast(request: Request, podcast_id: str, db: Session = Depends(get_db)):
+    global open_pc
+    podcast = db.query(PodcastDB).filter(PodcastDB.id == podcast_id).first()
+    if not podcast:
+        raise HTTPException(status_code=404, detail="Podcast not found")
+    
+    open_pc.curr_podcast_uuid = podcast.id
+    open_pc.chapters = podcast.chapters
+    open_pc.set_podcast_script_from_dict(podcast.transcript)
+    podcasts_audio_file_path = os.path.join("static", "audio_outputs", "podcast-" + str(open_pc.curr_podcast_uuid), "final.wav")
+    if os.path.exists(podcasts_audio_file_path):
+        open_pc.flags["is_podcast_available"] = True
+    return templates.TemplateResponse("podcasts.html", {"request": request, "podcast": podcast})
 
 @app.post("/api/generate_podcast_script")
 async def generate_podcast_script(
+        podcast_uuid: str = Form(...), 
         title: str = Form(...), 
+        description: str = Form(...), 
         content: str = Form(...), 
+        extra_prompt: str = Form(...), 
+        llmModel: str = Form(...), 
+        num_speakers: str = Form(...), 
+        podcast_len: str = Form(...), 
+        db: Session = Depends(get_db)
     ):
     global open_pc
+
+    podcast = db.query(PodcastDB).filter(PodcastDB.id == podcast_uuid).first()
+    if not podcast:
+        raise HTTPException(status_code=404, detail="Podcast not found")
+
+     # Update the podcast fields with the new data
+    podcast.title = title.strip()
+    podcast.description = description.strip()
+    podcast.chapters = content.strip()
+    podcast.settings = {
+        "extra_prompt": extra_prompt,
+        "llmModel": llmModel,
+        "num_speakers": num_speakers,
+        "podcast_len": podcast_len
+    }
+
+    # Save the updates to the database.
+    db.commit()
+    db.refresh(podcast)
 
     if open_pc is None:
         print("Open PC not initialized!!!")
@@ -138,6 +178,63 @@ async def generate_podcast_script(
 
     open_pc.chapters = content
     open_pc.run_in_thread("generate_podcast_script")
+
+    return {"message": "Podcast updated successfully", "podcast_id": podcast.id}   
+
+@app.post("/api/generate_podcast")
+async def generate_podcast_script(
+        podcast_uuid: str = Body(..., media_type="text/plain"),
+        db: Session = Depends(get_db)
+    ):
+    global open_pc
+
+    podcast = db.query(PodcastDB).filter(PodcastDB.id == podcast_uuid).first()
+    if not podcast:
+        raise HTTPException(status_code=404, detail="Podcast not found")
+
+    if open_pc is None:
+        print("Open PC not initialized!!!")
+        return
+
+    open_pc.run_in_thread("generate_podcast")
+    return {"message": "Podcast updated successfully", "podcast_id": podcast.id}    
+
+@app.post("/api/podcasts/save-transcript")
+async def save_transcript(
+        podcast_uuid: str = Body(..., media_type="text/plain"),
+        db: Session = Depends(get_db)
+    ):
+    global open_pc
+
+    # Retrieve the podcast from the database using the provided UUID
+    podcast = db.query(PodcastDB).filter(PodcastDB.id == podcast_uuid).first()
+    if not podcast:
+        raise HTTPException(status_code=404, detail="Podcast not found")
+    
+    if open_pc is None:
+        logging.warning("Open PC not initialized!!!")
+        return
+        
+    podcast.transcript = open_pc.get_podcast_script_as_dict()
+    
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error updating transcript: {e}")
+    
+    db.refresh(podcast)
+    return {"message": "Transcript updated successfully", "podcast_id": podcast.id}
+
+@app.get("/api/get_podcast_audio_url")
+async def get_audio_url():
+    global open_pc
+    audio_url = os.path.join("static", "audio_outputs", "podcast-"+str(open_pc.curr_podcast_uuid), "final.wav")  
+    audio_url = os.sep+audio_url  
+    if not audio_url:
+        raise HTTPException(status_code=404, detail="Audio not found")
+    
+    return JSONResponse(content={"audio_url": audio_url})
 
 @app.get("/api/get_podcast_script")
 async def get_podcast_script():
