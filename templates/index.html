@@ -29,19 +29,25 @@
                 {% include 'sidebar.html' %}
             </div>
 
-            <div class="col-10 p-4 mb-4">
-                <div class="container d-flex justify-content-between">
-                    <h5>Podcasts</h5>                   
+            <div class="col-10 mb-4" style="padding: 100px 100px;">
+                <div class="container-fluid d-flex justify-content-between mb-4">
+                    
+                    <div>
+                        <h2>My Podcasts</h2> 
+                        <small class="text-secondary">Each podcast is made up of individual episodes. Select a podcast to add a new episode.</small>
+                    </div>
+                                      
 
-                    <!-- Button to open Create Podcast modal -->
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#podcastModal">
-                        Create New Podcast
-                    </button>
+                    <div>
+                        <!-- Button to open Create Podcast modal -->
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#podcastModal">
+                            <i class="fa-solid fa-plus"></i> Create Podcast
+                        </button>
+                    </div>
+                    
                 </div>
 
-                <hr>
-
-                <div id="podcastList" class="mb-4"></div>
+                <div id="podcastList" class="d-flex flex-wrap"></div>
                     
             </div>
         </div>

@@ -67,9 +67,37 @@
                         <div class="mb-4">
                             <label for="llmModelSelect" class="form-label text-secondary">LLM Model for script generation</label>
                             <select class="form-select" name="llmModel" id="llmModelSelect" aria-label="Default select example">
-                                <option selected value="Deepseek">Deepseek</option>
-                                <option value="Mistral">Mistral</option>
+                              <optgroup label="OpenRouter API">
+                                <option value="deepseek/deepseek-r1:free" selected>deepseek/deepseek-r1</option>
+                                <option value="deepseek/deepseek-chat:free">deepseek/deepseek-chat</option>
+                                <option value="deepseek/deepseek-r1-distill-llama-70b:free">deepseek/deepseek-r1-distill-llama-70b</option>
+                                <option value="google/gemini-2.0-flash-exp:free">google/gemini-2.0-flash-exp</option>
+                                <option value="google/gemini-2.0-flash-lite-preview-02-05:free">google/gemini-2.0-flash-lite-preview-02-05</option>
+                                <option value="google/gemini-2.0-pro-exp-02-05:free">google/gemini-2.0-pro-exp-02-05</option>
+                                <option value="google/gemini-exp-1206:free">google/gemini-exp-1206</option>
+                                <option value="google/gemini-2.0-flash-thinking-exp-1219:free">google/gemini-2.0-flash-thinking-exp-1219</option>
+                                <option value="google/gemma-2-9b-it:free">google/gemma-2-9b-it</option>
+                                <option value="google/learnlm-1.5-pro-experimental:free">google/learnlm-1.5-pro-experimental</option>
+                                <option value="google/gemini-flash-1.5-8b-exp">google/gemini-flash-1.5-8b-exp</option>
+                                <option value="google/gemini-2.0-flash-thinking-exp:free">google/gemini-2.0-flash-thinking-exp</option>
+                                <option value="nvidia/llama-3.1-nemotron-70b-instruct:free">nvidia/llama-3.1-nemotron-70b-instruct</option>
+                                <option value="qwen/qwen2.5-vl-72b-instruct:free">qwen/qwen2.5-vl-72b-instruct</option>
+                                <option value="qwen/qwen-vl-plus:free">qwen/qwen-vl-plus</option>
+                                <option value="meta-llama/llama-3.3-70b-instruct:free">meta-llama/llama-3.3-70b-instruct</option>
+                                <option value="meta-llama/llama-3.2-11b-vision-instruct:free">meta-llama/llama-3.2-11b-vision-instruct</option>
+                                <option value="meta-llama/llama-3-8b-instruct:free">meta-llama/llama-3-8b-instruct</option>
+                                <option value="mistralai/mistral-7b-instruct:free">mistralai/mistral-7b-instruct</option>
+                                <option value="mistralai/mistral-nemo:free">mistralai/mistral-nemo</option>
+                                <option value="mistralai/mistral-small-24b-instruct-2501:free">mistralai/mistral-small-24b-instruct-2501</option>
+                                <option value="openchat/openchat-7b:free">openchat/openchat-7b</option>
+                                <option value="microsoft/phi-3-mini-128k-instruct:free">microsoft/phi-3-mini-128k-instruct</option>
+                                <option value="huggingfaceh4/zephyr-7b-beta:free">huggingfaceh4/zephyr-7b-beta</option>
+                                <option value="cognitivecomputations/dolphin3.0-r1-mistral-24b:free">cognitivecomputations/dolphin3.0-r1-mistral-24b</option>
+                                <option value="cognitivecomputations/dolphin3.0-mistral-24b:free">cognitivecomputations/dolphin3.0-mistral-24b</option>
+                              </optgroup>
                             </select>
+                            
+                            
                         </div>                             
                         
                         <div class="mb-4">

@@ -11,12 +11,7 @@
         Anger: default: 0.05 range: "0.05 to 1" 
       EmotionArrayFormat: "[Happiness, Sadness, Disgust, Fear, Surprise, Anger]"
 
-      SpeakerIDs: - 1 - 2 - 3 - 4 - 5
-      No of speaker: 2
-
-      PodcastLineStructure: 
-        "Speaker {id}: Emotion: {Emotion Array}: context: {speaker content}"
-        Do not include any extra text before or after the Podcast script structure
+      SpeakerIDs: - 1 - 2 - 3 - 4 - 5         
 
       Interruptions: 
         "Other speakers may interrupt the current speaker with short phrases like 'oh', 'wow', 'oops', etc."
@@ -35,9 +30,11 @@
       
       Others:
         "Generate output as simple text and do not use any markdown"
-        "Do not include Emoji's"
+        "Do not include Emoji's"    
 
-      PodcastDuration: "30 minutes or 4000 words"
+      PodcastLineStructure: 
+        "Speaker {id}: Emotion: {Emotion Array}: context: {speaker content}"
+        Do not include any extra text before or after the Podcast script structure  
   context: |
     Scenario:
       "You are a renowned tech podcaster."

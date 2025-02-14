@@ -2,19 +2,21 @@
 <div class="row" style="height: 80vh;">
 
     <!-- scipt display section -->
-    <div class="col-8">
+    <div class="col-8 p-3">
         
       <div class="d-flex justify-content-between">
-        <h4>Podcast Transcript</h4>
+
+        <div class="mb-4">
+          <h2>Podcast Transcript</h4>
+          <small class="text-secondary">Podcast transcripts are generated based on the chapters provided using an LLM.</small>
+        </div>
+        
 
         <div>
-          <button type="button" id="saveTranscriptBtn" class="btn btn-success" data-uuid="{{ podcast.id }}">Save</button>
           <button type="button" id="generatePodcastBtn" class="btn btn-danger" data-uuid="{{ podcast.id }}">Generate Podcast</button>
         </div>
         
       </div>
-        
-      <hr>
 
       <div class="d-flex justify-content-center d-none" id="podcatScriptGenSpinner">
           <div class="container-fluid m-3 p-4" style="width: 500px;">    
