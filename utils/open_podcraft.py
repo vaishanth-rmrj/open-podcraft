@@ -68,7 +68,7 @@ class OpenPodCraft:
 
         # TODO: imeplement gui to change this
         # setting default voices
-        self.set_voice(1, "zonos_americanmale")
+        self.set_voice(1, "zonos_britishmale_amped")
         self.set_voice(2, "zonos_britishfemale")
 
         torch.manual_seed(421)
@@ -105,7 +105,6 @@ class OpenPodCraft:
         self.voices[speaker_id] = voice_name
     
     def get_podcast_script_as_dict(self) -> List[Dict]:
-        logging.info(f"logging getting stranscript for : {self.curr_podcast_uuid}")
         queue = []
         for script_line in self.podcast_speaker_queue:
             queue.append(
@@ -116,7 +115,6 @@ class OpenPodCraft:
                     "emotion_arr": script_line.emotions_arr
                 }
             )
-        logging.info(queue)
         return queue      
 
     def set_podcast_script_from_dict(self, dict_script_queue:List[Dict]) -> None:
@@ -343,7 +341,7 @@ class OpenPodCraft:
             self, 
             speaker_queue:List[ScriptLine],            
             output_dir:str,
-            audio_overlap_duration_ms: int = 100,
+            audio_overlap_duration_ms: int = 500,
         ):
 
         num_speakers, voice_names = self.fetch_speaker_info(speaker_queue)
@@ -420,15 +418,16 @@ class OpenPodCraft:
                 return
 
             wavs = self.model.autoencoder.decode(codes).cpu()
-            if line_id > 0:
-                overlap_slice_index = int((audio_overlap_duration_ms / 1000) * self.model.autoencoder.sampling_rate)
-                self.audio_buffers.append(wavs[0][:, overlap_slice_index:])
-            else:
-                self.audio_buffers.append(wavs[0])
+            self.audio_buffers.append(wavs[0])
+            # if line_id > 0:
+            #     # overlap_slice_index = int((audio_overlap_duration_ms / 1000) * self.model.autoencoder.sampling_rate)
+            #     # self.audio_buffers.append(wavs[0][:, overlap_slice_index:])
+            # else:
+            #     self.audio_buffers.append(wavs[0])
 
             audio_save_path = os.path.join(output_dir, f"seq_{line_id}.wav")
             torchaudio.save(audio_save_path, wavs[0], self.model.autoencoder.sampling_rate)
-            prefix_audio_path = audio_save_path
+            # prefix_audio_path = audio_save_path
             logging.info(f"Completed voice over for podcast script line: {line_id} in {time.perf_counter()-start_t}s")
 
         final_audio= torch.cat(self.audio_buffers, dim=-1)
