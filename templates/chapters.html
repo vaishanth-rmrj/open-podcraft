@@ -1,5 +1,5 @@
 <div class="container-fluid">    
-    <form action="/api/generate_podcast_script" method="POST" id="podcastChaptersForm">
+    <form action="/api/generate_podcast_script" method="POST" id="podcastChaptersForm" >
         
         <div class="row mb-3">
             <div class="col-8">
@@ -8,7 +8,8 @@
                     <input type="text" 
                            class="form-control fs-2 border-0 shadow-none" 
                            name="title" 
-                           placeholder="Untitled Podcast">
+                           placeholder="Untitled Podcast"
+                           value="{{ podcast.title }}">
                   </div>
 
                 <!-- description -->                
@@ -19,8 +20,10 @@
                       placeholder="Description of the podcast" 
                       rows="3" 
                       style="height: 80px; overflow:hidden;"
-                      maxlength="300"                      
-                    ></textarea>
+                      maxlength="300"            
+                    > {{ podcast.description | trim }} </textarea>
+                    
+                    
 
                     <div class="d-flex justify-content-end">
                         <small class="form-text text-muted">Max 300 characters</small>
@@ -35,8 +38,10 @@
                       name="content" 
                       placeholder="CHAPTER 1: INTRODUCTION&#10;     • Content 1: Add your contents here&#10;     • Content 2: Add your contents here&#10;&#10;CHAPTER 2: MAIN TOPIC&#10;      • Content 1: Add your contents here&#10;     • Content 2: Add your contents here" 
                       rows="3" 
-                      style="height: 600px;"                      
-                    ></textarea>
+                      style="height: 600px;"          
+                    >{{ podcast.chapters | trim }}</textarea>  
+                               
+                    
                   </div>
 
             </div>
@@ -56,12 +61,12 @@
                               placeholder="Additional prompt details:&#10;&#8226; Focus on a specific topic (e.g., &quot;topic name&quot;)&#10;&#8226; Focus on a specific audience (e.g., &quot;audience type&quot;)"
                               rows="3"
                               style="height: 100px;"
-                            ></textarea>
+                            >{{podcast.settings.extra_prompt}}</textarea>
                           </div>
                         
                         <div class="mb-4">
                             <label for="llmModelSelect" class="form-label text-secondary">LLM Model for script generation</label>
-                            <select class="form-select" id="llmModelSelect" aria-label="Default select example">
+                            <select class="form-select" name="llmModel" id="llmModelSelect" aria-label="Default select example">
                                 <option selected value="Deepseek">Deepseek</option>
                                 <option value="Mistral">Mistral</option>
                             </select>
@@ -70,7 +75,7 @@
                         <div class="mb-4">
                             <label for="numSpeakers" class="form-label d-flex justify-content-between text-secondary">
                               Number of Speakers
-                              <span id="numSpeakersDisplay" class="badge bg-primary d-flex align-items-center justify-content-center" style="width: 1.5rem; height: 1.5rem;">2</span>
+                              <span id="numSpeakersDisplay" class="badge bg-primary d-flex align-items-center justify-content-center" style="width: 1.5rem; height: 1.5rem;">{{podcast.settings.num_speakers}}</span>
                             </label>
                             <input type="range" 
                                    class="form-range" 
@@ -79,14 +84,14 @@
                                    max="4" 
                                    step="1" 
                                    id="numSpeakers" 
-                                   value="2"
+                                   value="{{podcast.settings.num_speakers}}"
                                    oninput="document.getElementById('numSpeakersDisplay').innerText = this.value">
                           </div>
 
                         <div class="mb-4">
                             <label for="podcastLength" class="form-label d-flex justify-content-between text-secondary">
                                 Podcast Length
-                                <span id="podcastLengthDisplay" class="badge bg-primary d-flex align-items-center justify-content-center" style="min-width: 3rem; height: 2rem;">10 min</span>
+                                <span id="podcastLengthDisplay" class="badge bg-primary d-flex align-items-center justify-content-center" style="min-width: 3rem; height: 2rem;">{{podcast.settings.podcast_len}} min</span>
                             </label>
                             <input type="range" 
                                     class="form-range" 
@@ -95,9 +100,11 @@
                                     max="30" 
                                     step="5" 
                                     id="podcastLength" 
-                                    value="10"
+                                    value="{{podcast.settings.podcast_len}}"
                                     oninput="document.getElementById('podcastLengthDisplay').innerText = this.value+ ' min'">
                         </div>
+
+                        <input type="hidden" name="podcast_uuid" value="{{ podcast.id }}">
                         
                         <div class="d-flex justify-content-center mb-4">
                             <button type="button" class="btn btn-success" id="generatePodcastScriptBtn"

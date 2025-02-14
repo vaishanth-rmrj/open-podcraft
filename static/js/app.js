@@ -12,16 +12,20 @@ async function loadPodcasts() {
 
       } else {
         console.log(podcasts);
-        podcasts.forEach(podcast => {            
+        podcasts.forEach(podcast => {     
+            
+            const anchorTag = document.createElement("a");
+            anchorTag.href = `/podcasts/${podcast.id}`
 
             const row = document.createElement("div");
-            row.className = "container border p-4 mb-4";
+            row.className = "container border p-4 mb-4";            
 
             const podcastsTile = document.createElement("strong");
             podcastsTile.textContent = podcast.title;
+            
             row.appendChild(podcastsTile);
-
-            podcastList.appendChild(row);
+            anchorTag.appendChild(row);
+            podcastList.appendChild(anchorTag);
         });
       }
 

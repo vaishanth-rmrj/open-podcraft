@@ -29,32 +29,51 @@
                 {% include 'sidebar.html' %}
             </div>
 
-            <div class="col-10 p-4">
+            <div class="col-10 p-4 mb-4">
+                <div class="container d-flex justify-content-between">
+                    <h5>Podcasts</h5>                   
 
-                    <nav id="pills-tab" class="mb-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" role="tablist">
-                        <ol class="breadcrumb">
-                          <li class="breadcrumb-item" role="presentation">
-                            <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true"><strong>Chapters</strong></button>
-                          </li>
-                          <li class="breadcrumb-item" aria-current="page" role="presentation">
-                            <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" data-bs-target="#pills-profile" type="button" role="tab" aria-controls="pills-profile" aria-selected="false"><strong>Scripts</strong></button>
-                          </li>
-                        </ol>
-                    </nav>
-        
-                    <div class="tab-content" id="pills-tabContent">
-                        <div class="tab-pane fade " id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab" tabindex="0">
-                            {% include 'chapters.html' %}
-                        </div>
-        
-                        <div class="tab-pane fade show active" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab" tabindex="0">
-                            {% include 'script.html' %}
-                        </div>
-        
-                        <!-- <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab" tabindex="0">...</div>
-                        <div class="tab-pane fade" id="pills-disabled" role="tabpanel" aria-labelledby="pills-disabled-tab" tabindex="0">...</div> -->
-                    </div>
+                    <!-- Button to open Create Podcast modal -->
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#podcastModal">
+                        Create New Podcast
+                    </button>
+                </div>
+
+                <hr>
+
+                <div id="podcastList" class="mb-4"></div>
+                    
             </div>
+        </div>
+    </div>
+
+    <!-- Modal for Creating a Podcast -->
+    <div class="modal fade" id="podcastModal" tabindex="-1" aria-labelledby="podcastModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="podcastForm">
+            <div class="modal-header">
+                <h5 class="modal-title" id="podcastModalLabel">Create Podcast</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Title -->
+                <div class="mb-3">
+                <label for="title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="title" required>
+                </div>
+                <!-- Description -->
+                <!-- <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" rows="3" required></textarea>
+                </div>                 -->
+                <div id="formAlert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Create Podcast</button>
+            </div>
+            </form>
+        </div>
         </div>
     </div>
     

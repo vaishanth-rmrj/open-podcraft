@@ -95,7 +95,7 @@
 .audio-player-progress {
     height: 100%;
     background: linear-gradient(90deg, #1db954, #1ed760);
-    width: 30%;
+    width: 1%;
     transition: width 0.1s linear;
 }
 
