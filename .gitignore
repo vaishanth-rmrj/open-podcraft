@@ -9,3 +9,4 @@ configs/default.json
 .env
 static/voices/custom
 podcasts.db
+static/audio_outputs
