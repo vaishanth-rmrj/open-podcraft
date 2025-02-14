@@ -79,11 +79,11 @@
     font-size: 0.9rem;
 }
 
-.progress-container {
+.audio-player-progress-container {
     margin-bottom: 20px;
 }
 
-.progress-bar {
+.audio-player-progress-bar {
     height: 5px;
     background: #e9ecef;
     border-radius: 5px;
@@ -92,7 +92,7 @@
     cursor: pointer;
 }
 
-.progress {
+.audio-player-progress {
     height: 100%;
     background: linear-gradient(90deg, #1db954, #1ed760);
     width: 30%;
