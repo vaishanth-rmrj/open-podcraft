@@ -33,6 +33,7 @@ class OpenPodCraft:
         self.chapters = None
         prompts = load_prompts()
         self.curr_prompt = prompts[0]
+        self.curr_podcast_uuid = None
 
         self.config = load_config()
         self.available_voices = check_available_voices("assets/voices")
@@ -57,6 +58,7 @@ class OpenPodCraft:
             "is_generating_script": False,
             "is_script_available": False,
             "is_generating_podcast": False,
+            "is_podcast_available": False,
             "interupt_generation": False
         }
 
@@ -84,10 +86,27 @@ class OpenPodCraft:
                 {
                     "speaker": script_line.speaker,
                     "speaker_id": script_line.speaker_id,
-                    "content": script_line.content
+                    "content": script_line.content,
+                    "emotion_arr": script_line.emotions_arr
                 }
             )
-        return queue            
+        return queue      
+
+    def set_podcast_script_from_dict(self, dict_script_queue:List[Dict]) -> None:
+
+        if len(dict_script_queue) > 0:
+            self.podcast_speaker_queue = []
+            for script_dict in dict_script_queue:
+                self.podcast_speaker_queue.append(
+                    ScriptLine(
+                        speaker = script_dict["speaker"],
+                        speaker_id = script_dict["speaker_id"],
+                        content = script_dict["content"],
+                        emotions_arr = script_dict["emotion_arr"],
+                    )
+                )  
+
+            self.flags["is_script_available"]  = True 
     
     def generate_chapters(self, files:List, context:str, prompt:str) -> str:
         raise NotImplementedError("Generating chapters from files not yet implemented !!")
@@ -305,6 +324,7 @@ class OpenPodCraft:
         prefix_audio_path = self.silence_audio_path
         self.audio_buffers = []
         self.flags["is_generating_podcast"] = True
+        self.flags["is_podcast_available"] = False
         for line_id, speaker_line in enumerate(speaker_queue):
             logging.info(f"Performing voice over for podcast script line: {line_id}")
 
@@ -379,6 +399,7 @@ class OpenPodCraft:
         torchaudio.save(os.path.join(output_dir, "final.wav"), final_audio, self.model.autoencoder.sampling_rate)
         logging.info(f"Saving the entire podcast to: {os.path.join(output_dir, 'final.wav')}")
         self.flags["is_generating_podcast"] = False
+        self.flags["is_podcast_available"] = True
     
     def run_in_thread(self, fn_name:str) -> bool:
 
@@ -402,7 +423,8 @@ class OpenPodCraft:
                 logging.info(f"No prodcast script in queue!! Did you generate the script ?")
                 return False
 
-            output_dir = "outputs/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            output_dir = os.path.join("static", "audio_outputs", "podcast-"+str(self.curr_podcast_uuid))
+            # output_dir = "outputs/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             os.makedirs(output_dir, exist_ok=True)
             
             thread = threading.Thread(
