@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import sys
 import torch
 import torchaudio
@@ -10,14 +11,14 @@ import threading
 from dotenv import load_dotenv
 
 # fix package path for imports to work
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from openai import OpenAI
 from zonos.model import Zonos
 from zonos.conditioning import make_cond_dict
 
 # project imports
-from utils import process_script_from_txt, check_available_voices, ScriptLine, init_logging, load_prompts, process_podcast_script_from_llm
+from utils.util import process_script_from_txt, check_available_voices, ScriptLine, init_logging, load_prompts, process_podcast_script_from_llm
 from configs.utils import load_config
 from configs.default import DefaultConfig
 
@@ -25,6 +26,8 @@ load_dotenv()  # loads variables from .env
 
 class OpenPodCraft:
     def __init__(self):
+
+        logging.info("Initializing OpenPodCraft...")
         
         self.podcast_speaker_queue = []
         self.chapters = None
@@ -37,9 +40,10 @@ class OpenPodCraft:
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.llm_model_type = "deepseek/deepseek-r1:free"
+        self.llm_model_type = "deepseek/deepseek-chat:free" #"deepseek/deepseek-r1:free"
 
         # TTS model from Zyphra
+        logging.info(f"Initializing TTS model: {self.config.model_type}")
         self.model = Zonos.from_pretrained(self.config.model_type, device=self.device)
         self.model.bfloat16()
         self.model.eval()
@@ -49,6 +53,12 @@ class OpenPodCraft:
         self.silence_audio_path = "assets/voices/silence_100ms.wav"
 
         self.thread_queue = []
+        self.flags = {
+            "is_generating_script": False,
+            "is_script_available": False,
+            "is_generating_podcast": False,
+            "interupt_generation": False
+        }
 
         # TODO: imeplement gui to change this
         # setting default voices
@@ -87,6 +97,7 @@ class OpenPodCraft:
         logging.info(f"Generating podcast script from API using model :{model_type}")
 
         self.podcast_speaker_queue = []
+        self.flags["is_script_available"] = False 
         api_key = os.environ.get("OPENROUTER_API_KEY")
         if not api_key:
             raise EnvironmentError("The OPENROUTER_API_KEY environment variable is not set.")
@@ -113,6 +124,7 @@ class OpenPodCraft:
         ]
 
         logging.info("Waiting for LLM response. Please wait it might take several minutes !!")
+        self.flags["is_generating_script"] = True
         completion = client.chat.completions.create(
             extra_headers={
                 # "HTTP-Referer": "<YOUR_SITE_URL>", # Optional. Site URL for rankings on openrouter.ai.
@@ -138,6 +150,9 @@ class OpenPodCraft:
             llm_response,
             queue = self.podcast_speaker_queue,
         )
+
+        self.flags["is_script_available"] = True if len(self.podcast_speaker_queue) > 0 else False
+        self.flags["is_generating_script"] = False
 
         print(self.podcast_speaker_queue)
         return True
@@ -289,8 +304,14 @@ class OpenPodCraft:
         # generating voice over for each line in the script
         prefix_audio_path = self.silence_audio_path
         self.audio_buffers = []
+        self.flags["is_generating_podcast"] = True
         for line_id, speaker_line in enumerate(speaker_queue):
             logging.info(f"Performing voice over for podcast script line: {line_id}")
+
+            if self.flags["interupt_generation"]:
+                self.flags["interupt_generation"] = False
+                return
+
             start_t = time.perf_counter()
             voice_name = self.voices[speaker_line.speaker_id]
             speaker_embedding = speakers_embedding[voice_name]
@@ -337,6 +358,10 @@ class OpenPodCraft:
                 # sampling_params=dict(min_p=config.generation_params.min_p),
             )
 
+            if self.flags["interupt_generation"]:
+                self.flags["interupt_generation"] = False
+                return
+
             wavs = self.model.autoencoder.decode(codes).cpu()
             if line_id > 0:
                 overlap_slice_index = int((audio_overlap_duration_ms / 1000) * self.model.autoencoder.sampling_rate)
@@ -353,6 +378,7 @@ class OpenPodCraft:
         self.audio_buffers = [] # clear audio buffer
         torchaudio.save(os.path.join(output_dir, "final.wav"), final_audio, self.model.autoencoder.sampling_rate)
         logging.info(f"Saving the entire podcast to: {os.path.join(output_dir, 'final.wav')}")
+        self.flags["is_generating_podcast"] = False
     
     def run_in_thread(self, fn_name:str) -> bool:
 
