@@ -26,31 +26,7 @@
     <div style="max-width: 100vw; max-height: 100vh; overflow-x: hidden;">
         <div class="row">
             <div class="col-2">
-                <!-- Sidebar -->
-                <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 vh-100 sidebar">
-                    <a href="/" class="d-flex flex-column p-4 pb-3 mb-md-0 me-md-auto text-decoration-none">
-                        <span class="fw-bold" style="font-size: 1.8rem; background: linear-gradient(45deg, #00c853 0%, #00e676 50%, #64dd17 100%);background-clip: text; -webkit-background-clip: text; color: transparent; -webkit-text-fill-color: transparent;">
-                          Open
-                        </span>
-                        <span class="fw-bold" style="margin-left: 40px; font-size: 1.8rem; background: linear-gradient(45deg, #00c853 0%, #00e676 50%, #64dd17 100%); background-clip: text; -webkit-background-clip: text; color: transparent; -webkit-text-fill-color: transparent;">
-                            PodCraft
-                        </span>
-                    </a>
-                    <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start" id="menu">
-                        <li class="nav-item w-100">
-                            <a href="#" class="nav-link align-middle px-3">
-                              <i class="fas fa-podcast fs-4"></i> 
-                              <span class="ms-2 d-none d-sm-inline">Podcasts</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#" class="nav-link align-middle px-3">
-                              <i class="fas fa-microphone fs-4"></i> 
-                              <span class="ms-2 d-none d-sm-inline">Voices</span>
-                            </a>
-                        </li>
-                    </ul>                    
-                </div>
+                {% include 'sidebar.html' %}
             </div>
 
             <div class="col-10 p-4">
@@ -58,20 +34,20 @@
                     <nav id="pills-tab" class="mb-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" role="tablist">
                         <ol class="breadcrumb">
                           <li class="breadcrumb-item" role="presentation">
-                            <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true">Chapters</button>
+                            <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true"><strong>Chapters</strong></button>
                           </li>
-                          <li class="breadcrumb-item active" aria-current="page" role="presentation">
-                            <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" data-bs-target="#pills-profile" type="button" role="tab" aria-controls="pills-profile" aria-selected="false">Scripts</button>
+                          <li class="breadcrumb-item" aria-current="page" role="presentation">
+                            <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" data-bs-target="#pills-profile" type="button" role="tab" aria-controls="pills-profile" aria-selected="false"><strong>Scripts</strong></button>
                           </li>
                         </ol>
                     </nav>
         
                     <div class="tab-content" id="pills-tabContent">
-                        <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab" tabindex="0">
+                        <div class="tab-pane fade " id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab" tabindex="0">
                             {% include 'chapters.html' %}
                         </div>
         
-                        <div class="tab-pane fade " id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab" tabindex="0">
+                        <div class="tab-pane fade show active" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab" tabindex="0">
                             {% include 'script.html' %}
                         </div>
         
