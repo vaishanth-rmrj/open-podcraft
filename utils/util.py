@@ -178,6 +178,15 @@ def init_logging():
     # Return the list handler for later use
     return list_handler
 
+def setup_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[
+            logging.StreamHandler()
+        ]
+    )
+
 def load_prompts(filename:str = "assets/prompts.yaml"):
     with open(filename, "r") as file:
         prompts = yaml.safe_load(file)

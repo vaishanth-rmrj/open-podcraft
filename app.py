@@ -18,9 +18,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 # project imports
-from utils.util import init_logging, get_wav_files
+from utils.util import init_logging, get_wav_files, setup_logging
 from utils.open_podcraft import OpenPodCraft
 from database import Base, PodcastDB
+
+setup_logging()
 
 # global vars
 open_pc = OpenPodCraft()
@@ -133,6 +135,14 @@ async def generate_podcast_script(
     ):
     global open_pc
 
+    if open_pc is None:
+        logging.warning("Open PodCraft not initialized!!!")
+        return {"status": "fail"}    
+    
+    if open_pc.flags["is_generating_script"]:
+        logging.warning("Script generation already in progress !!")
+        return {"status": "fail"}   
+
     podcast = db.query(PodcastDB).filter(PodcastDB.id == podcast_uuid).first()
     if not podcast:
         raise HTTPException(status_code=404, detail="Podcast not found")
@@ -150,16 +160,12 @@ async def generate_podcast_script(
 
     # Save the updates to the database.
     db.commit()
-    db.refresh(podcast)
-
-    if open_pc is None:
-        print("Open PC not initialized!!!")
-        return
+    db.refresh(podcast)    
 
     open_pc.chapters = content
     open_pc.run_in_thread("generate_podcast_script")
 
-    return {"message": "Podcast updated successfully", "podcast_id": podcast.id}   
+    return {"status": "success"}   
 
 @app.post("/api/podcasts/generate-podcast")
 async def generate_podcast_script(
@@ -168,16 +174,16 @@ async def generate_podcast_script(
     ):
     global open_pc
 
+    if open_pc is None:
+        logging.info("Open PodCraft not initialized!!!")
+        return {"status": "fail"}  
+
     podcast = db.query(PodcastDB).filter(PodcastDB.id == podcast_uuid).first()
     if not podcast:
-        raise HTTPException(status_code=404, detail="Podcast not found")
-
-    if open_pc is None:
-        print("Open PC not initialized!!!")
-        return
+        raise HTTPException(status_code=404, detail="Podcast not found")     
 
     open_pc.run_in_thread("generate_podcast")
-    return {"message": "Podcast updated successfully", "podcast_id": podcast.id}    
+    return {"status": "success"}    
 
 @app.post("/api/podcasts/save-transcript")
 async def save_transcript(
@@ -303,5 +309,5 @@ def run_web_app() -> None:
 
 if __name__ == "__main__":   
 
-    init_logging()
+    # init_logging()
     run_web_app()

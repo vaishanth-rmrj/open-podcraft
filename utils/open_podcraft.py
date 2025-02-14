@@ -18,11 +18,12 @@ from zonos.model import Zonos
 from zonos.conditioning import make_cond_dict
 
 # project imports
-from utils.util import process_script_from_txt, check_available_voices, ScriptLine, init_logging, load_prompts, process_podcast_script_from_llm
+from utils.util import process_script_from_txt, check_available_voices, ScriptLine, setup_logging, load_prompts, process_podcast_script_from_llm
 from configs.utils import load_config
 from configs.default import DefaultConfig
 
 load_dotenv()  # loads variables from .env
+setup_logging()
 
 class OpenPodCraft:
     def __init__(self):
@@ -156,13 +157,10 @@ class OpenPodCraft:
         logging.info("LLM response received")
 
         llm_response = completion.choices[0].message.content
-        if llm_response is None:
+        if llm_response is None or len(llm_response) < 2:
             logging.info(f"Did not receive a response from LLM. Try again !!")
+            self.flags["is_generating_script"] = False
             return False
-
-        os.makedirs("outputs", exist_ok=True)
-        with open("outputs/llm_script.txt", "w") as file:
-            file.write(llm_response)
 
         # generate podcast script speaker queue  from raw llm response
         process_podcast_script_from_llm(
@@ -174,6 +172,7 @@ class OpenPodCraft:
         self.flags["is_generating_script"] = False
 
         print(self.podcast_speaker_queue)
+        self.thread_queue.pop()
         return True
 
     def fetch_speaker_info(self, speaker_queue:List[ScriptLine]):
@@ -400,6 +399,8 @@ class OpenPodCraft:
         logging.info(f"Saving the entire podcast to: {os.path.join(output_dir, 'final.wav')}")
         self.flags["is_generating_podcast"] = False
         self.flags["is_podcast_available"] = True
+
+        self.thread_queue.pop()
     
     def run_in_thread(self, fn_name:str) -> bool:
 
@@ -459,7 +460,7 @@ class OpenPodCraft:
 
 if __name__ == "__main__":
 
-    init_logging()
+    # init_logging()
 
     # load chapters
     with open("assets/chapters.txt", "r") as f:
