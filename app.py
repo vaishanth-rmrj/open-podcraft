@@ -330,6 +330,41 @@ async def upload_voice(file: UploadFile = File(...), voiceName: str = Form(...))
 
     return JSONResponse({"filename": filename})
 
+class VoiceUpdate(BaseModel):
+    podcast_uuid: str
+    speaker_id: str
+    voice_name: str
+
+@app.post("/api/voices/set")
+async def update_voice(data: VoiceUpdate, db: Session = Depends(get_db)):
+    # Log or update your database accordingly.
+    print(f"Podcast UUID: {data.podcast_uuid}")
+    print(f"Speaker: {data.speaker_id} is set to voice: {data.voice_name}")
+    
+    global open_pc
+
+    if open_pc is None:
+        return {"status": "not found"}
+    
+    podcast = db.query(PodcastDB).filter(PodcastDB.id == data.podcast_uuid).first()
+    if not podcast:
+        raise HTTPException(status_code=404, detail="Podcast not found")      
+    
+    if not isinstance(podcast.voice_names, dict):
+        podcast.voice_names = {}
+    
+    podcast.voice_names[int(data.speaker_id)] = data.voice_name    
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error updating transcript: {e}")
+    
+    db.refresh(podcast)    
+    open_pc.set_voice(int(data.speaker_id), data.voice_name)
+
+    return {"status": "success"}
+
 def handle_interrupt(signum, frame) -> None:
     global is_shutdown, open_pc
 

@@ -28,14 +28,16 @@ async function populatePodcastScript(){
       container.innerHTML = "";
       dataList.forEach(data => {
         const newContent = `
-            <div class="row">
-                <div class="col-2">
-                    <strong>${data.speaker}</strong>
-                </div>
-                <div class="col-10">
-                    <p>${data.content}</p>
-                </div>
+            <div class="d-flex">
+              <div style="min-width:100px">
+                <strong>${data.speaker}</strong>
+              </div>
+
+              <div>
+                <p>${data.content}</p>
+              </div>
             </div>
+            
         `;
         container.insertAdjacentHTML("beforeend", newContent);
     });
@@ -144,7 +146,6 @@ generatePodcastBtn.addEventListener("click", () => {
     })
     .then(data => {
         console.log("Success:", data);
-        alert("Podcast generate successfully!");
     })
     .catch(error => {
         console.error("Error:", error);
@@ -275,5 +276,91 @@ function showGeneratingAnimationPodcastAudio() {
   forwardBtn.style.display = "none";
   progressContainer.style.display = "none";
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Fetch voice data from the backend.
+  fetch("/api/voices/get-info")
+    .then((response) => response.json())
+    .then((data) => {
+      const voiceSelect = document.getElementById("voiceSelect");
+      // Clear the select (keep the default placeholder)
+      voiceSelect.innerHTML = '<option value="" selected>Choose a voice</option>';
+
+      // A helper function to add an option.
+      function addOption(voice) {
+        // If voice is an object, use its "name" property, else assume it's a string.
+        const voiceName = typeof voice === "object" ? voice.filename : voice;
+        const option = document.createElement("option");
+        option.value = voiceName;
+        option.textContent = voiceName;
+        voiceSelect.appendChild(option);
+      }
+
+      // Populate the voices from both lists.
+      if (data.voices && Array.isArray(data.voices)) {
+        data.voices.forEach(addOption);
+      }
+      if (data.custom_voices && Array.isArray(data.custom_voices)) {
+        data.custom_voices.forEach(addOption);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching voices:", error);
+    });
+});
+
+
+let currentSpeakerID = "";
+
+// When the modal is about to be shown, update its title and record which speaker is being updated.
+const voiceModal = document.getElementById("voiceModal");
+voiceModal.addEventListener("show.bs.modal", function (event) {
+  const button = event.relatedTarget;
+  currentSpeakerID = button.getAttribute("data-speaker-id");
+
+  // Update modal title for the selected speaker.
+  const modalTitle = voiceModal.querySelector(".modal-title");
+  modalTitle.textContent = "Select Voice for Speaker" + currentSpeakerID;
   
+  // Reset the select field (optional)
+  document.getElementById("voiceSelect").selectedIndex = 0;
+});
+
+    // When the save button is clicked in the modal...
+document.getElementById("saveVoiceBtn").addEventListener("click", function () {
+  const selectedVoice = document.getElementById("voiceSelect").value;
+  if (selectedVoice) {
+    // Update the corresponding speaker's display area with the selected voice.
+    document.getElementById("speaker"+currentSpeakerID + "VoiceDisplay").innerHTML =
+      "Voice: " + selectedVoice;
+    
+    // Get podcast uuid from the hidden input field.
+    const saveVoiceBtn = document.getElementById("saveVoiceBtn");
+    const podcastUuid = saveVoiceBtn.dataset.uuid;
+    
+    // Create the payload to send.
+    const payload = {
+      podcast_uuid: podcastUuid,
+      speaker_id: currentSpeakerID,
+      voice_name: selectedVoice,
+    };
+
+    // Send the POST request to the FastAPI backend.
+    fetch("/api/voices/set", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log("Response from backend:", data);
+      })
+      .catch(error => {
+        console.error("Error sending voice data:", error);
+      });
+  }
+  // Hide the modal.
+  const modalInstance = bootstrap.Modal.getInstance(voiceModal);
+  modalInstance.hide();
+});
   
