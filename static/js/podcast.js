@@ -22,7 +22,7 @@ async function populatePodcastScript(){
 
   try {
 
-      const response = await fetch("/api/get_podcast_script");
+      const response = await fetch("/api/podcasts/get-script");
       const dataList = await response.json();
 
       container.innerHTML = "";
@@ -129,7 +129,7 @@ generatePodcastBtn.addEventListener("click", () => {
     const podcastUuid = generatePodcastBtn.getAttribute("data-uuid");
 
     // Send the UUID as a plain text payload using fetch
-    fetch("/api/generate_podcast", {
+    fetch("/api/podcasts/generate-podcast", {
         method: "POST",
         headers: {
             "Content-Type": "text/plain"
@@ -226,7 +226,7 @@ function fetchAndUpdateAudioUrl() {
   const audioPlayer = document.getElementById("audioPlayer");
 
   // Send a GET request to fetch the audio URL.
-  fetch("/api/get_podcast_audio_url")
+  fetch("/api/podcasts/get-audio-url")
     .then(response => {
       if (!response.ok) {
         throw new Error("Failed to fetch audio URL");
