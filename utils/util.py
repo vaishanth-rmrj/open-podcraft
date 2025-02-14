@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 import yaml
 
-from typing import List
+from typing import List, Dict
 
 class ScriptLine(BaseModel):
     speaker: str
@@ -182,3 +182,27 @@ def load_prompts(filename:str = "assets/prompts.yaml"):
     with open(filename, "r") as file:
         prompts = yaml.safe_load(file)
     return prompts
+
+def get_wav_files(directory: Path) -> List[Dict[str, str]]:
+    """
+    Retrieve all .wav files from the specified directory.
+
+    Args:
+        directory (Path): The directory path to search for .wav files.
+
+    Returns:
+        List[Dict[str, str]]: A list of dictionaries where each dictionary contains:
+            - "filename": the base name of the file (without extension)
+            - "filepath": the full path to the file as a string.
+    """
+    if not directory.exists() or not directory.is_dir():
+        return []
+
+    return [
+        {
+            "filename": file.stem,
+            "filepath": str(file)
+        }
+        for file in directory.iterdir()
+        if file.is_file() and file.suffix.lower() == ".wav"
+    ]
