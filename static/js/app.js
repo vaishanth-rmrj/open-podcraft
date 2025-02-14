@@ -6,6 +6,7 @@ async function loadPodcasts() {
     const response = await fetch("/api/podcasts/get");
     const podcasts = await response.json();
     const podcastList = document.getElementById("podcastList");
+    podcastList.innerHTML = ''; // clear contents
 
     if (podcasts.length === 0) {
       podcastList.innerHTML = `
@@ -18,9 +19,12 @@ async function loadPodcasts() {
       podcasts.forEach(podcast => {
         const newContent = `
             <a href="/podcasts/${podcast.id}" class="text-decoration-none text-reset">
-                <div class="container border rounded p-4 mb-4">
-                    <img src="/static/images/audio_player_background.webp" alt="${podcast.title}" class="rounded me-3" width="50" height="50">
-                    <strong>${podcast.title}</strong>
+                <div class="container d-flex border rounded p-3 m-3" style="width:400px;">
+                    <img src="/static/images/audio_player_background.webp" alt="${podcast.title}" class="rounded me-3" width="100px" height="100px">
+                    <div>
+                      <h3 class="mb-1">${podcast.title}</h3>
+                      <small>${podcast.description}</small>
+                    </div>
                 </div>
             </a>
         `;

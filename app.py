@@ -46,10 +46,24 @@ templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), 't
 #### common api ####
 @app.get("/", response_class=HTMLResponse)
 async def index_page(request: Request):
+    global open_pc
+
+    if open_pc is None:
+        logging.warning("Open PodCraft not initialized!!!")
+        return {"status": "fail"}    
+    open_pc.reset()
+
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/voices", response_class=HTMLResponse)
 async def index_page(request: Request):
+    global open_pc
+
+    if open_pc is None:
+        logging.warning("Open PodCraft not initialized!!!")
+        return {"status": "fail"}    
+    open_pc.reset()
+
     return templates.TemplateResponse("voices.html", {"request": request})
 
 # Dependency to get DB session
@@ -135,6 +149,10 @@ async def generate_podcast_script(
     ):
     global open_pc
 
+    if content == "" or title == "":
+        logging.warning("You must provide content and title to generate script!!")
+        return {"status": "fail"}   
+
     if open_pc is None:
         logging.warning("Open PodCraft not initialized!!!")
         return {"status": "fail"}    
@@ -163,6 +181,10 @@ async def generate_podcast_script(
     db.refresh(podcast)    
 
     open_pc.chapters = content
+    open_pc.llm_model_type = llmModel
+    open_pc.user_prompt = extra_prompt
+    open_pc.num_speakers = num_speakers
+    open_pc.podcast_len = podcast_len.split(" ")[0]
     open_pc.run_in_thread("generate_podcast_script")
 
     return {"status": "success"}   
@@ -185,32 +207,32 @@ async def generate_podcast_script(
     open_pc.run_in_thread("generate_podcast")
     return {"status": "success"}    
 
-@app.post("/api/podcasts/save-transcript")
-async def save_transcript(
-        podcast_uuid: str = Body(..., media_type="text/plain"),
-        db: Session = Depends(get_db)
-    ):
-    global open_pc
+# @app.post("/api/podcasts/save-transcript")
+# async def save_transcript(
+#         podcast_uuid: str = Body(..., media_type="text/plain"),
+#         db: Session = Depends(get_db)
+#     ):
+#     global open_pc
 
-    # Retrieve the podcast from the database using the provided UUID
-    podcast = db.query(PodcastDB).filter(PodcastDB.id == podcast_uuid).first()
-    if not podcast:
-        raise HTTPException(status_code=404, detail="Podcast not found")
+#     # Retrieve the podcast from the database using the provided UUID
+#     podcast = db.query(PodcastDB).filter(PodcastDB.id == podcast_uuid).first()
+#     if not podcast:
+#         raise HTTPException(status_code=404, detail="Podcast not found")
     
-    if open_pc is None:
-        logging.warning("Open PC not initialized!!!")
-        return
+#     if open_pc is None:
+#         logging.warning("Open PC not initialized!!!")
+#         return
         
-    podcast.transcript = open_pc.get_podcast_script_as_dict()
+#     podcast.transcript = open_pc.get_podcast_script_as_dict()
     
-    try:
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error updating transcript: {e}")
+#     try:
+#         db.commit()
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Error updating transcript: {e}")
     
-    db.refresh(podcast)
-    return {"message": "Transcript updated successfully", "podcast_id": podcast.id}
+#     db.refresh(podcast)
+#     return {"message": "Transcript updated successfully", "podcast_id": podcast.id}
 
 @app.get("/api/podcasts/get-audio-url")
 async def get_audio_url():
@@ -223,12 +245,26 @@ async def get_audio_url():
     return JSONResponse(content={"audio_url": audio_url})
 
 @app.get("/api/podcasts/get-script")
-async def get_podcast_script():
+async def get_podcast_script(db: Session = Depends(get_db)):
     global open_pc
 
-    if open_pc is None:
+    if open_pc is None or open_pc.curr_podcast_uuid is None:
         return {"status": "not found"}
     
+    podcast = db.query(PodcastDB).filter(PodcastDB.id == open_pc.curr_podcast_uuid).first()
+    if not podcast:
+        raise HTTPException(status_code=404, detail="Podcast not found")      
+    
+    
+    podcast.transcript = open_pc.get_podcast_script_as_dict()
+    
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error updating transcript: {e}")
+    
+    db.refresh(podcast)    
     return open_pc.get_podcast_script_as_dict()
 
 #### voices api ####

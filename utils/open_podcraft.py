@@ -62,6 +62,9 @@ class OpenPodCraft:
             "is_podcast_available": False,
             "interupt_generation": False
         }
+        self.user_prompt = None
+        self.num_speakers = 2
+        self.podcast_len = 10 # mins
 
         # TODO: imeplement gui to change this
         # setting default voices
@@ -69,6 +72,27 @@ class OpenPodCraft:
         self.set_voice(2, "zonos_britishfemale")
 
         torch.manual_seed(421)
+    
+    def reset(self):
+        """
+        reset the podcast info stored in variables
+        """
+
+        self.podcast_speaker_queue = []
+        self.chapters = None
+        self.curr_podcast_uuid = None
+
+        self.available_voices = check_available_voices("assets/voices")
+        self.audio_buffers = []
+
+        self.flags = {
+            "is_generating_script": False,
+            "is_script_available": False,
+            "is_generating_podcast": False,
+            "is_podcast_available": False,
+            "interupt_generation": False
+        }
+
     
     def set_voice(self, speaker_id:int, voice_name:str):
 
@@ -81,6 +105,7 @@ class OpenPodCraft:
         self.voices[speaker_id] = voice_name
     
     def get_podcast_script_as_dict(self) -> List[Dict]:
+        logging.info(f"logging getting stranscript for : {self.curr_podcast_uuid}")
         queue = []
         for script_line in self.podcast_speaker_queue:
             queue.append(
@@ -91,6 +116,7 @@ class OpenPodCraft:
                     "emotion_arr": script_line.emotions_arr
                 }
             )
+        logging.info(queue)
         return queue      
 
     def set_podcast_script_from_dict(self, dict_script_queue:List[Dict]) -> None:
@@ -112,9 +138,17 @@ class OpenPodCraft:
     def generate_chapters(self, files:List, context:str, prompt:str) -> str:
         raise NotImplementedError("Generating chapters from files not yet implemented !!")
     
-    def generate_podcast_script(self, chapters:str, prompt:str, model_type:str = "deepseek/deepseek-r1:free"):
+    def generate_podcast_script(
+            self, 
+            chapters:str, 
+            prompt:str,
+            user_prompt:str = None, 
+            podcast_len:int = 10,
+            num_speakers:int = 2,
+            llm_model_type:str = "deepseek/deepseek-r1:free"
+        ):
 
-        logging.info(f"Generating podcast script from API using model :{model_type}")
+        logging.info(f"Generating podcast script from API using model :{llm_model_type}")
 
         self.podcast_speaker_queue = []
         self.flags["is_script_available"] = False 
@@ -127,6 +161,9 @@ class OpenPodCraft:
             api_key=api_key,
         )
 
+        if user_prompt is None:
+            user_prompt = "No additonal requirements"
+
         # create msg
         msgs = [
             {
@@ -135,14 +172,15 @@ class OpenPodCraft:
             },
             {
                 "role": "user",
-                "content": f"rules: \n {prompt['rules']} \n end of rules"
+                "content": f"rules: \n {prompt['rules']} PodcastDuration: {str(podcast_len)} minutes (strict) No of speaker: {str(num_speakers)} \n end of rules"
             },
             {
                 "role": "user",
-                "content": f"Prompt: \n {prompt['context']} \n end of prompt"
+                "content": f"Prompt: \n {prompt['context']} \n Additonal Requirements (strict): {str(user_prompt)} \n \n end of prompt"
             }
         ]
 
+        logging.info(f"Requested response from: {str(llm_model_type)}")
         logging.info("Waiting for LLM response. Please wait it might take several minutes !!")
         self.flags["is_generating_script"] = True
         completion = client.chat.completions.create(
@@ -151,7 +189,7 @@ class OpenPodCraft:
                 "X-Title": "Open-PodCraft", # Optional. Site title for rankings on openrouter.ai.
             },
             extra_body={},
-            model=model_type,
+            model=llm_model_type,
             messages=msgs,
         )
         logging.info("LLM response received")
@@ -415,7 +453,7 @@ class OpenPodCraft:
             
             thread = threading.Thread(
                 target=self.generate_podcast_script,
-                args=[self.chapters, self.curr_prompt, self.llm_model_type],
+                args=[self.chapters, self.curr_prompt, self.user_prompt, self.podcast_len, self.num_speakers,  self.llm_model_type],
                 daemon=True, 
             )
         

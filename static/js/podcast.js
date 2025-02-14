@@ -96,33 +96,33 @@ function checkPodcastScriptStatus() {
 }
 checkPodcastScriptStatus();
 
-const saveTranscriptBtn = document.getElementById("saveTranscriptBtn");
-saveTranscriptBtn.addEventListener("click", () => {
-    const podcastUuid = saveTranscriptBtn.getAttribute("data-uuid");
+// const saveTranscriptBtn = document.getElementById("saveTranscriptBtn");
+// saveTranscriptBtn.addEventListener("click", () => {
+//     const podcastUuid = saveTranscriptBtn.getAttribute("data-uuid");
 
-    // Send the UUID as a plain text payload using fetch
-    fetch("/api/podcasts/save-transcript", {
-        method: "POST",
-        headers: {
-            "Content-Type": "text/plain"
-        },
-        body: podcastUuid
-    })
-    .then(response => {
-        if (!response.ok) {
-        throw new Error("Network response was not ok: " + response.statusText);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log("Success:", data);
-        alert("Transcript updated successfully!");
-    })
-    .catch(error => {
-        console.error("Error:", error);
-        alert("Error updating transcript.");
-    });
-});
+//     // Send the UUID as a plain text payload using fetch
+//     fetch("/api/podcasts/save-transcript", {
+//         method: "POST",
+//         headers: {
+//             "Content-Type": "text/plain"
+//         },
+//         body: podcastUuid
+//     })
+//     .then(response => {
+//         if (!response.ok) {
+//         throw new Error("Network response was not ok: " + response.statusText);
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         console.log("Success:", data);
+//         alert("Transcript updated successfully!");
+//     })
+//     .catch(error => {
+//         console.error("Error:", error);
+//         alert("Error updating transcript.");
+//     });
+// });
 
 const generatePodcastBtn = document.getElementById("generatePodcastBtn");
 generatePodcastBtn.addEventListener("click", () => {
