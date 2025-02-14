@@ -12,6 +12,7 @@
       EmotionArrayFormat: "[Happiness, Sadness, Disgust, Fear, Surprise, Anger]"
 
       SpeakerIDs: - 1 - 2 - 3 - 4 - 5
+      No of speaker: 2
 
       PodcastLineStructure: 
         "Speaker {id}: Emotion: {Emotion Array}: context: {speaker content}"
