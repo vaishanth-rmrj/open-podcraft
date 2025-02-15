@@ -50,9 +50,7 @@ function checkPodcastScriptStatus() {
 
   const flagsCheckEventSource = new EventSource('/api/check_flags');
   flagsCheckEventSource.onmessage = function(event) {
-      const data = JSON.parse(event.data);
-      console.log(data);
-      
+      const data = JSON.parse(event.data);     
 
       const spinnerDisplay = document.getElementById("podcatScriptGenSpinner");
       const notFoundMsgDisplay = document.getElementById("notFoundMsgDisplay");
@@ -73,7 +71,6 @@ function checkPodcastScriptStatus() {
 
       } 
       if (data.is_script_available) {
-          console.log(data.is_script_available);
           spinnerDisplay.classList.add("d-none");
           notFoundMsgDisplay.classList.add("d-none");
           scriptLinesDisplay.classList.remove("d-none");

@@ -44,7 +44,7 @@
                     <textarea 
                       class="form-control fs-5 border-0 shadow-none" 
                       name="content" 
-                      placeholder="CHAPTER 1: INTRODUCTION&#10;     • Content 1: Add your contents here&#10;     • Content 2: Add your contents here&#10;&#10;CHAPTER 2: MAIN TOPIC&#10;      • Content 1: Add your contents here&#10;     • Content 2: Add your contents here" 
+                      placeholder="Chapter 1: Title&#10;     • Discuss about the main topics that you want to cover.&#10;     • You can generate the chapters using your choice of llm.&#10;&#10;Chapter 2: Title&#10;      • Discuss about other topics you want to cover.&#10;"
                       rows="3" 
                       style="height: 70vh;"          
                     >{{ podcast.chapters | trim }}</textarea>                                
@@ -56,8 +56,8 @@
             <div class="col-4">
                 <div class="card border-0" style="width: 100%;">
                     <div class="card-body">
-                        <h5 class="card-title">Settings</h5>
-                        <hr class="mb-4">
+                        <h5 class="card-title mb-3">Settings</h5>
+                        <!-- <hr class="mb-4"> -->
                       
                         <div class="mb-4">
                             <label for="extraPrompt" class="form-label text-secondary">Customize prompt</label>
@@ -110,7 +110,7 @@
                         <div class="mb-4">
                             <label for="numSpeakers" class="form-label d-flex justify-content-between text-secondary">
                               Number of Speakers
-                              <span id="numSpeakersDisplay" class="badge bg-primary d-flex align-items-center justify-content-center" style="width: 1.5rem; height: 1.5rem;">{{podcast.settings.num_speakers}}</span>
+                              <span id="numSpeakersDisplay" class="badge bg-success d-flex align-items-center justify-content-center" style="width: 1.5rem; height: 1.5rem;">{{podcast.settings.num_speakers}}</span>
                             </label>
                             <input type="range" 
                                    class="form-range" 
@@ -126,7 +126,7 @@
                         <div class="mb-4">
                             <label for="podcastLength" class="form-label d-flex justify-content-between text-secondary">
                                 Podcast Length
-                                <span id="podcastLengthDisplay" class="badge bg-primary d-flex align-items-center justify-content-center" style="min-width: 3rem; height: 2rem;">{{podcast.settings.podcast_len}} min</span>
+                                <span id="podcastLengthDisplay" class="badge bg-success d-flex align-items-center justify-content-center" style="min-width: 3rem; height: 2rem;">{{podcast.settings.podcast_len}} min</span>
                             </label>
                             <input type="range" 
                                     class="form-range" 
