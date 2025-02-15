@@ -21,6 +21,8 @@ from sqlalchemy.orm import sessionmaker, Session
 from utils.util import init_logging, get_wav_files, setup_logging
 from utils.open_podcraft import OpenPodCraft
 from database import Base, PodcastDB
+from io import BytesIO
+from pydub import AudioSegment
 
 setup_logging()
 
@@ -289,16 +291,9 @@ async def get_voices_info() -> Dict[str, List[Dict[str, str]]]:
 @app.post("/api/voices/upload")
 async def upload_voice(file: UploadFile = File(...), voiceName: str = Form(...)) -> JSONResponse:
     """
-    Upload an audio file with an associated voice name and store it as a .wav file in the 
-    'static/voices/custom' directory. If a file with the same voice name exists, a counter is 
-    appended to the filename to ensure uniqueness.
-
-    Args:
-        file (UploadFile): The audio file uploaded.
-        voiceName (str): The name of the voice provided in the form data.
-
-    Returns:
-        JSONResponse: A JSON object containing the unique filename under the key "filename".
+    Upload an audio file, convert it to a WAV file, and store it in the 
+    'static/voices/custom' directory. If a file with the same voice name exists,
+    a counter is appended to the filename to ensure uniqueness.
     """
     voices_dir = Path("static") / "voices" / "custom"
     voices_dir.mkdir(parents=True, exist_ok=True)
@@ -308,23 +303,29 @@ async def upload_voice(file: UploadFile = File(...), voiceName: str = Form(...))
     if not base_name:
         base_name = str(uuid.uuid4())
 
-    # Ensure file extension is .wav
-    ext = Path(file.filename).suffix.lower()
-    if ext != ".wav":
-        ext = ".wav"
-
-    # Build the filename and check for duplicates
-    filename = f"{base_name}{ext}"
+    # Prepare a unique filename with .wav extension
+    filename = f"{base_name}.wav"
     file_location = voices_dir / filename
     counter = 1
     while file_location.exists():
-        filename = f"{base_name}_{counter}{ext}"
+        filename = f"{base_name}_{counter}.wav"
         file_location = voices_dir / filename
         counter += 1
 
     try:
+        # Read file content from the uploaded file
         content = await file.read()
-        file_location.write_bytes(content)
+        audio_bytes = BytesIO(content)
+
+        # Convert the audio file to WAV regardless of original format.
+        # pydub will attempt to infer the format automatically.
+        try:
+            audio = AudioSegment.from_file(audio_bytes)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Unsupported or invalid audio format: {e}")
+
+        # Export the audio in WAV format to the designated file location.
+        audio.export(file_location, format="wav")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
 
