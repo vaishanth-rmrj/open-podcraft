@@ -4,12 +4,22 @@
         <div class="row mb-3">
             <div class="col-8">
                 <!-- podcast title -->   
-                <div class="">
+                <div class="d-flex justify-content-between align-items-center">
                     <input type="text" 
                            class="form-control fs-2 border-0 shadow-none" 
                            name="title" 
                            placeholder="Untitled Podcast"
                            value="{{ podcast.title }}">
+                    
+                    <div>
+                      <button type="button" class="btn btn-success" id="generatePodcastScriptBtn"
+                        style="width:170px; background: linear-gradient(45deg, #28a745, #218838); border: none; color: #fff; box-shadow: 0 0 16px rgba(40, 167, 69, 0.8); transition: transform 0.3s ease-in-out;"
+                        onmouseover="this.style.transform='scale(1.05)';"
+                        onmouseout="this.style.transform='scale(1)';"
+                      >
+                      <i class="fa-solid fa-scroll"></i> Generate Script
+                      </button>
+                    </div>       
                   </div>
 
                 <!-- description -->                
@@ -130,16 +140,6 @@
                         </div>
 
                         <input type="hidden" name="podcast_uuid" value="{{ podcast.id }}">
-                        
-                        <div class="d-flex justify-content-center mb-4">
-                            <button type="button" class="btn btn-success" id="generatePodcastScriptBtn"
-                              style="background: linear-gradient(45deg, #28a745, #218838); border: none; color: #fff; box-shadow: 0 0 16px rgba(40, 167, 69, 0.8); transition: transform 0.3s ease-in-out;"
-                              onmouseover="this.style.transform='scale(1.05)';"
-                              onmouseout="this.style.transform='scale(1)';"
-                            >
-                              Generate Script
-                            </button>
-                          </div>
                     </div>
                 </div>
             </div>

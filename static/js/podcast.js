@@ -85,8 +85,6 @@ function checkPodcastScriptStatus() {
       }     
 
       if (data.is_podcast_available) {
-          const podcastAudioPlayerProgressBar = document.getElementById("podcastAudioPlayerProgressBar");
-          podcastAudioPlayerProgressBar.classList.add("d-none");
           fetchAndUpdateAudioUrl();
       }
   };
@@ -97,34 +95,6 @@ function checkPodcastScriptStatus() {
   };
 }
 checkPodcastScriptStatus();
-
-// const saveTranscriptBtn = document.getElementById("saveTranscriptBtn");
-// saveTranscriptBtn.addEventListener("click", () => {
-//     const podcastUuid = saveTranscriptBtn.getAttribute("data-uuid");
-
-//     // Send the UUID as a plain text payload using fetch
-//     fetch("/api/podcasts/save-transcript", {
-//         method: "POST",
-//         headers: {
-//             "Content-Type": "text/plain"
-//         },
-//         body: podcastUuid
-//     })
-//     .then(response => {
-//         if (!response.ok) {
-//         throw new Error("Network response was not ok: " + response.statusText);
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         console.log("Success:", data);
-//         alert("Transcript updated successfully!");
-//     })
-//     .catch(error => {
-//         console.error("Error:", error);
-//         alert("Error updating transcript.");
-//     });
-// });
 
 const generatePodcastBtn = document.getElementById("generatePodcastBtn");
 generatePodcastBtn.addEventListener("click", () => {
@@ -220,11 +190,11 @@ document.addEventListener("DOMContentLoaded", function() {
 function fetchAndUpdateAudioUrl() {
   // Get references to the UI elements
   const playPauseBtn = document.getElementById("playPauseBtn");
-  const rewindBtn = document.getElementById("rewindBtn");
-  const forwardBtn = document.getElementById("forwardBtn");
   const progressContainer = document.getElementById("progressContainer");
   const stopBtn = document.getElementById("stopBtn");
   const audioPlayer = document.getElementById("audioPlayer");
+  const podcastAudioPlayerProgressBar = document.getElementById("podcastAudioPlayerProgressBar");
+
 
   // Send a GET request to fetch the audio URL.
   fetch("/api/podcasts/get-audio-url")
@@ -243,11 +213,10 @@ function fetchAndUpdateAudioUrl() {
         audioPlayer.src = audioUrl;
         audioPlayer.load();
 
-        stopBtn.style.display = "none";
-        playPauseBtn.style.display = "inline-block";
-        rewindBtn.style.display = "inline-block";
-        forwardBtn.style.display = "inline-block";
-        progressContainer.style.display = "block";
+        podcastAudioPlayerProgressBar.classList.add("d-none");
+        progressContainer.classList.remove("d-none");
+        playPauseBtn.classList.remove("d-none");
+        stopBtn.classList.add("d-none");
 
       } else {
         console.error("No audio URL found in response");
@@ -263,18 +232,14 @@ function fetchAndUpdateAudioUrl() {
 function showGeneratingAnimationPodcastAudio() {
 
   const playPauseBtn = document.getElementById("playPauseBtn");
-  const rewindBtn = document.getElementById("rewindBtn");
-  const forwardBtn = document.getElementById("forwardBtn");
   const progressContainer = document.getElementById("progressContainer");
   const stopBtn = document.getElementById("stopBtn");
   const podcastAudioPlayerProgressBar = document.getElementById("podcastAudioPlayerProgressBar");
   
   podcastAudioPlayerProgressBar.classList.remove("d-none");
-  stopBtn.style.display = "inline-block";
-  playPauseBtn.style.display = "none";
-  rewindBtn.style.display = "none";
-  forwardBtn.style.display = "none";
-  progressContainer.style.display = "none";
+  progressContainer.classList.add("d-none");
+  playPauseBtn.classList.add("d-none");
+  stopBtn.classList.remove("d-none");
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -331,8 +296,7 @@ document.getElementById("saveVoiceBtn").addEventListener("click", function () {
   const selectedVoice = document.getElementById("voiceSelect").value;
   if (selectedVoice) {
     // Update the corresponding speaker's display area with the selected voice.
-    document.getElementById("speaker"+currentSpeakerID + "VoiceDisplay").innerHTML =
-      "Voice: " + selectedVoice;
+    document.getElementById("speaker"+currentSpeakerID + "VoiceDisplay").innerHTML = selectedVoice;
     
     // Get podcast uuid from the hidden input field.
     const saveVoiceBtn = document.getElementById("saveVoiceBtn");
