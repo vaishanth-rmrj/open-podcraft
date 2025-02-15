@@ -13,7 +13,7 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - ./open-podcraft:/root/open-podcraft:z
+      - ../open-podcraft:/root/open-podcraft:z
     deploy:
       resources:
         reservations:
@@ -25,3 +25,5 @@ services:
       - NVIDIA_VISIBLE_DEVICES=0
       - GPU_TYPE=nvidia
     command: tail -f /dev/null
+    ports:
+      - "8000:8000"
