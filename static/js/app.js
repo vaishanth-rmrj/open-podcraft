@@ -19,10 +19,10 @@ async function loadPodcasts() {
       podcasts.forEach(podcast => {
         const newContent = `
             <a href="/podcasts/${podcast.id}" class="text-decoration-none text-reset">
-                <div class="container d-flex border rounded p-3 m-3" style="width:400px;">
+                <div class="container d-flex border rounded p-3 m-3" style="width:600px;">
                     <img src="/static/images/audio_player_background.webp" alt="${podcast.title}" class="rounded me-3" width="100px" height="100px">
                     <div>
-                      <h3 class="mb-1">${podcast.title}</h3>
+                      <h5 class="mb-1">${podcast.title}</h5>
                       <small>${podcast.description}</small>
                     </div>
                 </div>

@@ -23,20 +23,20 @@
 </head>
 
 <body>
-    <div style="max-width: 100vw; max-height: 100vh; overflow-x: hidden;">
+
+    <div style="max-width: 100vw; max-height: 100vh; overflow: hidden;">
         <div class="row">
             <div class="col-2">
                 {% include 'sidebar.html' %}
             </div>
 
-            <div class="col-10 mb-4" style="padding: 100px 100px;">
+            <div class="col-10 mb-4" style="padding: 100px 100px; overflow-y: scroll; max-height: 100vh;">
                 <div class="container-fluid d-flex justify-content-between mb-4">
                     
                     <div>
                         <h2>My Podcasts</h2> 
                         <small class="text-secondary">Each podcast is made up of individual episodes. Select a podcast to add a new episode.</small>
-                    </div>
-                                      
+                    </div>                                      
 
                     <div>
                         <!-- Button to open Create Podcast modal -->
@@ -53,38 +53,36 @@
         </div>
     </div>
 
-    <!-- Modal for Creating a Podcast -->
-    <div class="modal fade" id="podcastModal" tabindex="-1" aria-labelledby="podcastModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="podcastForm">
+<!-- Modal for Creating a Podcast -->
+<div class="modal fade" id="podcastModal" tabindex="-1" aria-labelledby="podcastModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+    <div class="modal-content">
+        <form id="podcastForm">
+
             <div class="modal-header">
                 <h5 class="modal-title" id="podcastModalLabel">Create Podcast</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <div class="modal-body">
-                <!-- Title -->
                 <div class="mb-3">
-                <label for="title" class="form-label">Title</label>
-                <input type="text" class="form-control" id="title" required>
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="title" required>
                 </div>
-                <!-- Description -->
-                <!-- <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" rows="3" required></textarea>
-                </div>                 -->
                 <div id="formAlert"></div>
             </div>
+
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary">Create Podcast</button>
             </div>
-            </form>
-        </div>
-        </div>
+
+        </form>
     </div>
+    </div>
+</div>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="/static/js/app.js"></script>  
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="/static/js/app.js"></script>  
 
 </body>
 

@@ -37,12 +37,12 @@ class OpenPodCraft:
         self.curr_podcast_uuid = None
 
         self.config = load_config()
-        self.available_voices = check_available_voices("static/voices")
+        self.available_voices = check_available_voices(["static/voices", "static/voices/custom"])
         
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.llm_model_type = "deepseek/deepseek-chat:free" #"deepseek/deepseek-r1:free"
+        self.llm_model_type = "google/gemini-2.0-flash-thinking-exp:free" #"deepseek/deepseek-chat:free" #"deepseek/deepseek-r1:free"
 
         # TTS model from Zyphra
         logging.info(f"Initializing TTS model: {self.config.model_type}")
@@ -82,7 +82,7 @@ class OpenPodCraft:
         self.chapters = None
         self.curr_podcast_uuid = None
 
-        self.available_voices = check_available_voices("static/voices")
+        self.available_voices = check_available_voices(["static/voices", "static/voices/custom"])
         self.audio_buffers = []
 
         self.flags = {
@@ -192,6 +192,11 @@ class OpenPodCraft:
         )
         logging.info("LLM response received")
 
+        if completion.choices is None:
+            logging.info(f"Did not receive a response from LLM. Try again !!")
+            self.flags["is_generating_script"] = False
+            return False
+
         llm_response = completion.choices[0].message.content
         if llm_response is None or len(llm_response) < 2:
             logging.info(f"Did not receive a response from LLM. Try again !!")
@@ -208,7 +213,8 @@ class OpenPodCraft:
         self.flags["is_generating_script"] = False
 
         print(self.podcast_speaker_queue)
-        self.thread_queue.pop()
+        if len(self.thread_queue) > 0:
+            self.thread_queue.pop()
         return True
 
     def fetch_speaker_info(self, speaker_queue:List[ScriptLine]):

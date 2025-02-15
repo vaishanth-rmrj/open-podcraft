@@ -117,16 +117,17 @@ def process_script_from_txt(script_filepath: str, queue: list[ScriptLine], speak
         #         ScriptLine(speaker=speaker.strip(), speaker_id=int(match.group(1)), content=content.strip())
         #     )
 
-def check_available_voices(dir_path: str):
+def check_available_voices(dirs_path: List[str]):
     voices = {}
-    directory = Path(dir_path)
-    for file in directory.iterdir():
-        if file.is_file() and file.suffix.lower() in [".wav", ".mp3"]:
-            voices[file.stem] = str(file)            
-            # voices.append({
-            #     "voice_name": file.stem,
-            #     "path": str(file)
-            # })
+    for dir in dirs_path:
+        directory = Path(dir)
+        for file in directory.iterdir():
+            if file.is_file() and file.suffix.lower() in [".wav", ".mp3"]:
+                voices[file.stem] = str(file)            
+                # voices.append({
+                #     "voice_name": file.stem,
+                #     "path": str(file)
+                # })
     return voices
 
 def get_speaker_id(text:str, match_expr:str = r"Speaker\s+(\S+)"):
