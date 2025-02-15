@@ -9,12 +9,11 @@ RUN apt update && \
 # install additonal dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git git-lfs \
-    nano vim less util-linux tree \
+    nano vim less util-linux tree ffmpeg\
     htop atop nvtop \
     sed gawk grep curl wget tmux \
     x11-apps terminator \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-
 
 RUN mkdir -p /root/install
 RUN mkdir -p /root/open-podcraft
@@ -26,3 +25,5 @@ WORKDIR /root/install/Zonos
 RUN uv pip install --system -e . && uv pip install --system -e .[compile]
 
 WORKDIR /root/open-podcraft
+COPY ./requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
