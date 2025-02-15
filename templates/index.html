@@ -16,9 +16,11 @@
     <!-- project files -->
     <link rel="stylesheet" href="/static/css/styles.css">  
     
-    <style>
-        
-    </style>
+    <!-- google font for logo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+
 
 </head>
 
@@ -40,8 +42,8 @@
 
                     <div>
                         <!-- Button to open Create Podcast modal -->
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#podcastModal">
-                            <i class="fa-solid fa-plus"></i> Create Podcast
+                        <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#podcastModal">
+                            <i class="fa-solid fa-plus"></i> Create
                         </button>
                     </div>
                     
@@ -59,21 +61,25 @@
     <div class="modal-content">
         <form id="podcastForm">
 
-            <div class="modal-header">
-                <h5 class="modal-title" id="podcastModalLabel">Create Podcast</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-secondary" id="podcastModalLabel">Create Podcast</h5>
+                <button type="button" class="btn-close btn-sm text-secondary" data-bs-dismiss="modal" aria-label="Close" style="font-size: 12px;"></button>
             </div>
 
             <div class="modal-body">
-                <div class="mb-3">
-                    <label for="title" class="form-label">Title</label>
-                    <input type="text" class="form-control" id="title" required>
-                </div>
+                <div class="">
+                    <input type="text" 
+                           class="form-control fs-4 border-0 shadow-none" 
+                           id="title"
+                           name="title" 
+                           placeholder="Enter the title of the podcast..."
+                           required>
+                  </div>
                 <div id="formAlert"></div>
             </div>
 
-            <div class="modal-footer">
-                <button type="submit" class="btn btn-primary">Create Podcast</button>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-success">Create</button>
             </div>
 
         </form>

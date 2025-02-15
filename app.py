@@ -132,6 +132,20 @@ def create_podcast(podcast: PodcastTitle, db: Session = Depends(get_db)):
     db.refresh(db_podcast)
     return {"message": "Podcast created", "id": db_podcast.id}
 
+class PodcastDeleteRequest(BaseModel):
+    uuid: str
+
+@app.delete("/api/podcasts/delete")
+async def delete_podcast(data: PodcastDeleteRequest, db: Session = Depends(get_db)):
+    podcast = db.query(PodcastDB).filter(PodcastDB.id == data.uuid).first()
+    if not podcast:
+        raise HTTPException(status_code=404, detail="Podcast not found")
+    
+    db.delete(podcast)
+    db.commit()
+    
+    return {"message": "Podcast deleted successfully"}
+
 @app.get("/api/podcasts/get")
 def read_podcasts(db: Session = Depends(get_db)):
     podcasts = db.query(PodcastDB).all()

@@ -19,31 +19,47 @@
 </head>
 
 <body>
-    <div style="max-width: 100vw; max-height: 100vh; overflow-x: hidden;">
+    <div style="max-width: 100vw; max-height: 100vh; overflow: hidden;">
         <div class="row">
             <div class="col-2">
                 {% include 'sidebar.html' %}
             </div>
 
-            <div class="col-10 p-4">
+            <div class="col-10" style="padding: 50px 50px;">
 
-                <div>
-                    <h4>Voices</h4>
-                </div>
+                <h3 class="mb-4">Voices</h3>
 
                 <div class="row">
-                    <div class="col-6">
+                    <div class="col-6" style="max-height: 82vh; overflow-y: scroll;">
                         <div>
-                            <h5>Default Voices</h5>
-                            <div id="voiceList" class="container-fluid" style="overflow-y: scroll;">
+                            <h5 class="text-secondary mb-2">Default Voices</h5>
+                            <div id="voiceList" class="container-fluid">
                                 <!-- Audio items will be added here dynamically -->
+                                
+                                <!-- loading animation -->
+                                <div class="mb-3 mt-3 placeholder-glow">
+                                    <span class="placeholder w-25"></span>
+                                    <span class="placeholder w-75"></span>
+                                </div>
+
+                                <div class="mb-3 placeholder-glow">
+                                    <span class="placeholder w-25"></span>
+                                    <span class="placeholder w-75"></span>
+                                </div>
+
+                                <div class="mb-4 placeholder-glow">
+                                    <span class="placeholder w-25"></span>
+                                    <span class="placeholder w-75"></span>
+                                </div>
+                                
                             </div>
                         </div>
                         
 
                         <div>
-                            <h5>Custom Voices</h5>
-                            <div id="customVoiceList" class="container-fluid" style="overflow-y: scroll;">
+                            <h5 class="text-secondary mb-2">Custom Voices</h5>
+                            <div id="customVoiceList" class="container-fluid">
+                                <h6 class="text-secondary">Clone your voice to get started!</h6>
                                 <!-- Audio items will be added here dynamically -->
                             </div>
                         </div>
@@ -51,12 +67,12 @@
 
                     <div class="col-6">
                         <!-- Recorder Section -->
-                        <div class="container-fluid d-flex flex-column align-items-center border-2">
-                            <div class="recorder mb-5">
+                        <div class="container-fluid d-flex flex-column px-4">
+                            <div class="recorder">
                                 <h3>Clone Your Voice</h3>
 
                                 <div clas="mb-3" style="width: 80%;">
-                                    <p>Recite this text when cloning your voice</p>
+                                    <p class="text-secondary">Recite this text when cloning your voice</p>
                                     <p>In the quiet moments of dawn, when the world is still and full of promise, every sound carries meaning and every word tells a story. I am proud to share my voice, a unique blend of clarity and emotion, to help create a model that captures the true essence of human expression. With each syllable, I invite you to experience the richness of language and the beauty of authentic communication.</p>
                                 </div>
 
@@ -66,11 +82,11 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <button id="startBtn" class="btn btn-success mr-4">
-                                        <i class="fas fa-microphone-alt"></i> Start Recording
+                                    <button id="startBtn" class="btn btn-success">
+                                        <i class="fas fa-microphone-alt"></i> Record
                                     </button>
-                                    <button id="stopBtn" class="btn btn-danger mr-4" disabled>
-                                        <i class="fas fa-stop"></i> Stop Recording
+                                    <button id="stopBtn" class="btn btn-outline-danger mx-2" disabled>
+                                        <i class="fas fa-stop"></i> Stop
                                     </button>
                                 </div>
                                 
