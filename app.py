@@ -209,33 +209,6 @@ async def generate_podcast_script(
     open_pc.run_in_thread("generate_podcast")
     return {"status": "success"}    
 
-# @app.post("/api/podcasts/save-transcript")
-# async def save_transcript(
-#         podcast_uuid: str = Body(..., media_type="text/plain"),
-#         db: Session = Depends(get_db)
-#     ):
-#     global open_pc
-
-#     # Retrieve the podcast from the database using the provided UUID
-#     podcast = db.query(PodcastDB).filter(PodcastDB.id == podcast_uuid).first()
-#     if not podcast:
-#         raise HTTPException(status_code=404, detail="Podcast not found")
-    
-#     if open_pc is None:
-#         logging.warning("Open PC not initialized!!!")
-#         return
-        
-#     podcast.transcript = open_pc.get_podcast_script_as_dict()
-    
-#     try:
-#         db.commit()
-#     except Exception as e:
-#         db.rollback()
-#         raise HTTPException(status_code=500, detail=f"Error updating transcript: {e}")
-    
-#     db.refresh(podcast)
-#     return {"message": "Transcript updated successfully", "podcast_id": podcast.id}
-
 @app.get("/api/podcasts/get-audio-url")
 async def get_audio_url():
     global open_pc
@@ -337,11 +310,7 @@ class VoiceUpdate(BaseModel):
     voice_name: str
 
 @app.post("/api/voices/set")
-async def update_voice(data: VoiceUpdate, db: Session = Depends(get_db)):
-    # Log or update your database accordingly.
-    print(f"Podcast UUID: {data.podcast_uuid}")
-    print(f"Speaker: {data.speaker_id} is set to voice: {data.voice_name}")
-    
+async def update_voice(data: VoiceUpdate, db: Session = Depends(get_db)):   
     global open_pc
 
     if open_pc is None:
@@ -354,7 +323,8 @@ async def update_voice(data: VoiceUpdate, db: Session = Depends(get_db)):
     if not isinstance(podcast.voice_names, dict):
         podcast.voice_names = {}
     
-    podcast.voice_names[int(data.speaker_id)] = data.voice_name    
+    podcast.voice_names[int(data.speaker_id)] = data.voice_name   
+    logging.info(f"Speaker: {data.speaker_id} is set to voice: {data.voice_name}") 
     try:
         db.commit()
     except Exception as e:
@@ -365,6 +335,25 @@ async def update_voice(data: VoiceUpdate, db: Session = Depends(get_db)):
     open_pc.set_voice(int(data.speaker_id), data.voice_name)
 
     return {"status": "success"}
+
+class DeleteVoiceRequest(BaseModel):
+    filepath: str
+
+@app.delete("/api/voices/delete")
+def delete_voice(request: DeleteVoiceRequest):
+    filepath = os.path.join(request.filepath)
+    print(filepath)
+
+    # Check if the file exists
+    if os.path.exists(filepath):
+        try:
+            os.remove(filepath)
+            logging.info(f"Deleted voice: {filepath}") 
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Could not delete file.")
+        return {"detail": "File deleted successfully."}
+    else:
+        raise HTTPException(status_code=404, detail="File not found.")
 
 def handle_interrupt(signum, frame) -> None:
     global is_shutdown, open_pc
