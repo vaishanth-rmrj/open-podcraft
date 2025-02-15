@@ -37,7 +37,7 @@ class OpenPodCraft:
         self.curr_podcast_uuid = None
 
         self.config = load_config()
-        self.available_voices = check_available_voices("assets/voices")
+        self.available_voices = check_available_voices("static/voices")
         
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -82,7 +82,7 @@ class OpenPodCraft:
         self.chapters = None
         self.curr_podcast_uuid = None
 
-        self.available_voices = check_available_voices("assets/voices")
+        self.available_voices = check_available_voices("static/voices")
         self.audio_buffers = []
 
         self.flags = {
