@@ -94,8 +94,6 @@ def process_script_from_txt(script_filepath: str, queue: list[ScriptLine], speak
         context_match = re.search(context_pattern, line)
         context = context_match.group(1).strip() if context_match else None
         
-        # TODO: make it robust to script speaker name variations
-        # for now should do the work
         # check if the line contains a colon to separate speaker ID and content
         if speaker_id is not None or context is not None:
             queue.append(
@@ -106,28 +104,15 @@ def process_script_from_txt(script_filepath: str, queue: list[ScriptLine], speak
                     emotions_arr=emotion_list,
                 )
             )
-        # if ":" in line:
-        #     # split only at the first colon in case the content also contains colons
-        #     speaker, content = line.split(":", 1)
-        #     match = re.match(speaker_match_expr, speaker)
-        #     if not match:
-        #         raise ValueError(f"Invalid speaker str provided: {speaker}")
-            
-        #     queue.append(
-        #         ScriptLine(speaker=speaker.strip(), speaker_id=int(match.group(1)), content=content.strip())
-        #     )
 
 def check_available_voices(dirs_path: List[str]):
     voices = {}
     for dir in dirs_path:
         directory = Path(dir)
-        for file in directory.iterdir():
-            if file.is_file() and file.suffix.lower() in [".wav", ".mp3"]:
-                voices[file.stem] = str(file)            
-                # voices.append({
-                #     "voice_name": file.stem,
-                #     "path": str(file)
-                # })
+        if directory.exists():
+            for file in directory.iterdir():
+                if file.is_file() and file.suffix.lower() in [".wav", ".mp3"]:
+                    voices[file.stem] = str(file)     
     return voices
 
 def get_speaker_id(text:str, match_expr:str = r"Speaker\s+(\S+)"):

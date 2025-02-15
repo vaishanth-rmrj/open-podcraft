@@ -46,6 +46,7 @@ class OpenPodCraft:
 
         # TTS model from Zyphra
         logging.info(f"Initializing TTS model: {self.config.model_type}")
+        logging.info(f"On the first run, the TTS models are downloaded, which may take around 10 minutes.")
         self.model = Zonos.from_pretrained(self.config.model_type, device=self.device)
         self.model.bfloat16()
         self.model.eval()
