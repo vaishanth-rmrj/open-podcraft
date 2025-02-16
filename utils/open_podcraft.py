@@ -9,6 +9,7 @@ import logging
 import time
 import threading
 from dotenv import load_dotenv
+from torch.nn.utils.rnn import pad_sequence
 
 # fix package path for imports to work
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -367,7 +368,9 @@ class OpenPodCraft:
         self.audio_buffers = []
         self.flags["is_generating_podcast"] = True
         self.flags["is_podcast_available"] = False
-        for line_id, speaker_line in enumerate(speaker_queue):
+        conditioning_tensors = []
+        audio_prefix_tensors = []
+        for line_id, speaker_line in enumerate(speaker_queue[:5]):
             logging.info(f"Performing voice over for podcast script line: {line_id}")
 
             if self.flags["interupt_generation"]:
@@ -408,41 +411,62 @@ class OpenPodCraft:
                 unconditional_keys=voice_config["uncond_keys"],
             )
             conditioning = self.model.prepare_conditioning(cond_dict)
+            conditioning_tensors.append(conditioning)
 
             audio_prefix_codes = self.get_audio_prefix(prefix_audio_path, audio_overlap_duration_ms)
+            audio_prefix_tensors.append(audio_prefix_codes)
+
             # generating the audio
-            codes = self.model.generate(
-                prefix_conditioning=conditioning,
-                audio_prefix_codes=audio_prefix_codes,
-                # max_new_tokens=max_new_tokens,
-                # cfg_scale=config.generation_params.cfg_scale,
-                # batch_size=1,
-                # sampling_params=dict(min_p=config.generation_params.min_p),
-            )
+            # codes = self.model.generate(
+            #     prefix_conditioning=conditioning,
+            #     audio_prefix_codes=audio_prefix_codes,
+            #     # max_new_tokens=max_new_tokens,
+            #     # cfg_scale=config.generation_params.cfg_scale,
+            #     # batch_size=1,
+            #     # sampling_params=dict(min_p=config.generation_params.min_p),
+            # )
 
-            if self.flags["interupt_generation"]:
-                self.flags["interupt_generation"] = False
-                return
+            # if self.flags["interupt_generation"]:
+            #     self.flags["interupt_generation"] = False
+            #     return
 
-            wavs = self.model.autoencoder.decode(codes).cpu()
-            self.audio_buffers.append(wavs[0])
+            # wavs = self.model.autoencoder.decode(codes).cpu()
+            # self.audio_buffers.append(wavs[0])
             # if line_id > 0:
             #     # overlap_slice_index = int((audio_overlap_duration_ms / 1000) * self.model.autoencoder.sampling_rate)
             #     # self.audio_buffers.append(wavs[0][:, overlap_slice_index:])
             # else:
             #     self.audio_buffers.append(wavs[0])
 
-            audio_save_path = os.path.join(output_dir, f"seq_{line_id}.wav")
-            torchaudio.save(audio_save_path, wavs[0], self.model.autoencoder.sampling_rate)
-            # prefix_audio_path = audio_save_path
-            logging.info(f"Completed voice over for podcast script line: {line_id} in {time.perf_counter()-start_t}s")
+            # audio_save_path = os.path.join(output_dir, f"seq_{line_id}.wav")
+            # torchaudio.save(audio_save_path, wavs[0], self.model.autoencoder.sampling_rate)
+            # # prefix_audio_path = audio_save_path
+            # logging.info(f"Completed voice over for podcast script line: {line_id} in {time.perf_counter()-start_t}s")
+        
+        max_seq_len = max(t.shape[1] for t in conditioning_tensors)
+        padded_tensors = [torch.nn.functional.pad(t, (0, 0, 0, max_seq_len - t.shape[1])) for t in conditioning_tensors]
+        # padded_tensors = pad_sequence([t.permute(1, 0, 2) for t in conditioning_tensors], batch_first=True)  # (2, max_seq_len, 2048)
+        # padded_tensors = padded_tensors.permute(0, 2, 1, 3)
+        audio_prefix_codes = self.get_audio_prefix(prefix_audio_path, audio_overlap_duration_ms)
+        repeated_tensor = audio_prefix_codes.repeat(10, 1, 1) 
+        codes = self.model.generate(
+            prefix_conditioning=torch.cat(padded_tensors, dim=0),
+            # audio_prefix_codes=repeated_tensor,
+            # max_new_tokens=max_new_tokens,
+            # cfg_scale=config.generation_params.cfg_scale,
+            batch_size=len(conditioning_tensors)*2,
+            # sampling_params=dict(min_p=config.generation_params.min_p),
+        )
+        wavs = self.model.autoencoder.decode(codes).cpu()
+        torchaudio.save(os.path.join(output_dir, "final.wav"), wavs[0], self.model.autoencoder.sampling_rate)
 
-        final_audio= torch.cat(self.audio_buffers, dim=-1)
-        self.audio_buffers = [] # clear audio buffer
-        torchaudio.save(os.path.join(output_dir, "final.wav"), final_audio, self.model.autoencoder.sampling_rate)
-        logging.info(f"Saving the entire podcast to: {os.path.join(output_dir, 'final.wav')}")
-        self.flags["is_generating_podcast"] = False
-        self.flags["is_podcast_available"] = True
+
+        # final_audio= torch.cat(self.audio_buffers, dim=-1)
+        # self.audio_buffers = [] # clear audio buffer
+        # torchaudio.save(os.path.join(output_dir, "final.wav"), final_audio, self.model.autoencoder.sampling_rate)
+        # logging.info(f"Saving the entire podcast to: {os.path.join(output_dir, 'final.wav')}")
+        # self.flags["is_generating_podcast"] = False
+        # self.flags["is_podcast_available"] = True
 
         self.thread_queue.pop()
     
@@ -507,7 +531,7 @@ if __name__ == "__main__":
     # init_logging()
 
     # load chapters
-    with open("assets/chapters.txt", "r") as f:
+    with open("test/chapters.txt", "r") as f:
         chapters = f.read()
     
     prompts = load_prompts()
@@ -523,7 +547,7 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
 
     # generate and process popcast script
-    open_pc.generate_podcast_script(chapters, prompt)
+    open_pc.generate_podcast_script(chapters, prompt, llm_model_type=open_pc.llm_model_type)
 
     # # generate podcast
     open_pc.generate_podcast(open_pc.podcast_speaker_queue, output_dir=output_dir)
