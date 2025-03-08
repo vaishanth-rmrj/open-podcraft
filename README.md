@@ -1,8 +1,10 @@
-<p align="center" style="font-size: 80px">🎙️Open Podcraft </p>
+<p align="center" style="margin-bottom:10px;">
+    <img alt="Logo" style="width:600px" src="extras/icons/openpodcraft_logo.png">
+</p>
+
 
 <p align="center" style="margin-bottom:40px;">
     <img alt="Static Badge" src="https://img.shields.io/badge/License-Apache%202.0-yellow">
-
 </p>
 
 # <p align="center"> Opensource AI Podcast generator with Voice Cloning </p>
